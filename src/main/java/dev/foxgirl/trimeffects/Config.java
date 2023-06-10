@@ -71,7 +71,7 @@ public final class Config {
         DEFAULT.effects.put("snout", "fire_resistance");
         DEFAULT.effects.put("rib", "haste");
         DEFAULT.effects.put("vex", "invisibility");
-        DEFAULT.effects.put("ward", "health_boost");
+        DEFAULT.effects.put("ward", "absorption");
         DEFAULT.effects.put("tide", "luck");
         DEFAULT.effects.put("wild", "hero_of_the_village");
         DEFAULT.effects.put("coast", "water_breathing");
@@ -102,22 +102,22 @@ public final class Config {
         try {
             return GSON.fromJson(Files.newBufferedReader(pathFile), Config.class);
         } catch (NoSuchFileException cause) {
-            Mod.LOGGER.error("Failed to read config, file not found");
+            TrimEffects.LOGGER.error("Failed to read config, file not found");
         } catch (IOException cause) {
-            Mod.LOGGER.error("Failed to read config, IO error", cause);
+            TrimEffects.LOGGER.error("Failed to read config, IO error", cause);
         } catch (JsonParseException cause) {
-            Mod.LOGGER.error("Failed to read config, JSON error", cause);
+            TrimEffects.LOGGER.error("Failed to read config, JSON error", cause);
         } catch (Exception cause) {
-            Mod.LOGGER.error("Failed to read config", cause);
+            TrimEffects.LOGGER.error("Failed to read config", cause);
         }
 
         try {
             Files.writeString(pathTemp, GSON.toJson(DEFAULT));
             Files.move(pathTemp, pathFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException cause) {
-            Mod.LOGGER.error("Failed to write new config, IO error", cause);
+            TrimEffects.LOGGER.error("Failed to write new config, IO error", cause);
         } catch (Exception cause) {
-            Mod.LOGGER.error("Failed to write new config", cause);
+            TrimEffects.LOGGER.error("Failed to write new config", cause);
         }
 
         return DEFAULT;

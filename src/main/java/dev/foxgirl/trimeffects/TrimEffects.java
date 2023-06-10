@@ -17,17 +17,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public final class Mod implements ModInitializer {
+public final class TrimEffects implements ModInitializer {
 
     public static final Logger LOGGER = LogManager.getLogger("trimeffects");
 
-    private static Mod INSTANCE;
+    private static TrimEffects INSTANCE;
 
-    public static Mod getInstance() {
+    public static TrimEffects getInstance() {
         return INSTANCE;
     }
 
-    public Mod() {
+    public TrimEffects() {
         INSTANCE = this;
     }
 
@@ -73,7 +73,7 @@ public final class Mod implements ModInitializer {
         if (effect != null && strength != null && strength > 0) {
             var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);
             if (effectType != null) {
-                player.addStatusEffect(new StatusEffectInstance(effectType, 50, strength - 1), player);
+                player.addStatusEffect(new StatusEffectInstance(effectType, 95, strength - 1), player);
             }
         }
     }

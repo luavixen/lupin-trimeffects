@@ -1,6 +1,6 @@
 package dev.foxgirl.trimeffects.mixin;
 
-import dev.foxgirl.trimeffects.Mod;
+import dev.foxgirl.trimeffects.TrimEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
 import net.minecraft.registry.DynamicRegistryManager;
@@ -18,16 +18,16 @@ import java.util.List;
 public abstract class MixinArmorTrim {
 
     @Inject(method = "appendTooltip", at = @At("TAIL"))
-    private static void afterAppendTooltip(ItemStack stack, DynamicRegistryManager manager, List<Text> tooltip, CallbackInfo info) {
-        var trim = Mod.getTrim(manager, stack);
+    private static void trimeffects$afterAppendTooltip(ItemStack stack, DynamicRegistryManager manager, List<Text> tooltip, CallbackInfo info) {
+        var trim = TrimEffects.getTrim(manager, stack);
         if (trim != null) {
-            var config = Mod.getInstance().getConfig();
+            var config = TrimEffects.getInstance().getConfig();
 
             var pattern = trim.getPattern();
             var material = trim.getMaterial();
 
-            var effect = config.getEffects().get(Mod.getKey(pattern));
-            var strength = config.getStrengths().get(Mod.getKey(material));
+            var effect = config.getEffects().get(TrimEffects.getKey(pattern));
+            var strength = config.getStrengths().get(TrimEffects.getKey(material));
 
             if (effect != null && strength != null && strength > 0) {
                 var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);

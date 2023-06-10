@@ -26,7 +26,7 @@
 
     "entrypoints": {
         "main": [
-            "dev.foxgirl.trimeffects.Mod"
+            "dev.foxgirl.trimeffects.TrimEffects"
         ]
     },
     "mixins": [
