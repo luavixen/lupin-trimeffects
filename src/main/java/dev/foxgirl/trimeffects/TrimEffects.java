@@ -1,6 +1,5 @@
 package dev.foxgirl.trimeffects;
 
-import net.fabricmc.api.ModInitializer;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
@@ -9,6 +8,9 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public final class TrimEffects implements ModInitializer {
+@Mod("trimeffects")
+public final class TrimEffects {
 
     public static final Logger LOGGER = LogManager.getLogger("trimeffects");
 
@@ -29,6 +32,8 @@ public final class TrimEffects implements ModInitializer {
 
     public TrimEffects() {
         INSTANCE = this;
+
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
     }
 
     private Config.Parsed config;
@@ -37,8 +42,7 @@ public final class TrimEffects implements ModInitializer {
         return Objects.requireNonNull(config, "Expression 'config'");
     }
 
-    @Override
-    public void onInitialize() {
+    private void onCommonSetup(FMLCommonSetupEvent event) {
         config = Config.read().parse();
     }
 

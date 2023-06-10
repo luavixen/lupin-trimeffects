@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "[46,)"
+
+license = "UNLICENSED"
+
+[[mods]]
+modId = "trimeffects"
+version = "${version}"
+
+displayName = "Trim Effects"
+displayURL = "https://legacy.curseforge.com/minecraft/mc-mods/trimseffects"
+
+authors = "lupiiin_, luavixen <lua@foxgirl.dev> (https://foxgirl.dev/)"
+description = "Makes armor trims grant special effects."
+
+[[dependencies.trimeffects]]
+modId = "forge"
+mandatory = true
+versionRange = "[46,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.trimeffects]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20,)"
+ordering = "NONE"
+side = "BOTH"

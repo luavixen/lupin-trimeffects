@@ -3,13 +3,13 @@ package dev.foxgirl.trimeffects;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.item.trim.ArmorTrimMaterial;
 import net.minecraft.item.trim.ArmorTrimPattern;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -95,7 +95,7 @@ public final class Config {
             .create();
 
     public static @NotNull Config read() {
-        Path pathDirectory = FabricLoaderImpl.INSTANCE.getConfigDir();
+        Path pathDirectory = FMLPaths.CONFIGDIR.get();
         Path pathFile = pathDirectory.resolve("trimeffects-config.json");
         Path pathTemp = pathDirectory.resolve("trimeffects-config.json.tmp");
 
