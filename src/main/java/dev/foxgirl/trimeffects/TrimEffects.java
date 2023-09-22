@@ -4,10 +4,10 @@ import net.fabricmc.api.ModInitializer;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.registry.*;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +47,9 @@ public final class TrimEffects implements ModInitializer {
     }
 
     public static @Nullable ArmorTrim getTrim(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
-        return ArmorTrim.getTrim(manager, stack).orElse(null);
+        var nbt = stack.getSubNbt("Trim");
+        if (nbt == null || !stack.isIn(ItemTags.TRIMMABLE_ARMOR)) return null;
+        return ArmorTrim.CODEC.parse(RegistryOps.of(NbtOps.INSTANCE, manager), nbt).result().orElse(null);
     }
 
     public void handlePlayerTick(ServerPlayerEntity player) {
