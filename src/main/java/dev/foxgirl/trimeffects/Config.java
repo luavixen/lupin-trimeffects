@@ -22,6 +22,9 @@ import java.util.Map;
 
 public final class Config {
 
+    public double secondsMaximum = 14.0;
+    public double secondsMinimum = 12.0;
+
     public @NotNull Map<String, String> effects = new LinkedHashMap<>();
     public @NotNull Map<String, Integer> strengths = new LinkedHashMap<>();
 
@@ -33,10 +36,15 @@ public final class Config {
 
     public static final class Parsed {
 
+        private final double secondsMaximum;
+        private final double secondsMinimum;
+
         private final Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> effects = new LinkedHashMap<>();
         private final Map<RegistryKey<ArmorTrimMaterial>, Integer> strengths = new LinkedHashMap<>();
 
         private Parsed(@NotNull Config config) {
+            secondsMaximum = config.secondsMaximum;
+            secondsMinimum = config.secondsMinimum;
             for (var entry : config.effects.entrySet()) {
                 var key = entry.getKey();
                 var value = entry.getValue();
@@ -54,10 +62,16 @@ public final class Config {
             }
         }
 
+        public double getSecondsMaximum() {
+            return secondsMaximum;
+        }
+        public double getSecondsMinimum() {
+            return secondsMinimum;
+        }
+
         public @NotNull Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> getEffects() {
             return effects;
         }
-
         public @NotNull Map<RegistryKey<ArmorTrimMaterial>, Integer> getStrengths() {
             return strengths;
         }

@@ -72,10 +72,16 @@ public final class TrimEffects implements ModInitializer {
         var effect = getConfig().getEffects().get(pattern);
         var strength = getConfig().getStrengths().get(material);
 
+        int durationMaximum = (int) ((getConfig().getSecondsMaximum() + 0.75) * 20.0);
+        int durationMinimum = (int) ((getConfig().getSecondsMinimum() + 0.75) * 20.0);
+
         if (effect != null && strength != null && strength > 0) {
             var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);
             if (effectType != null) {
-                player.addStatusEffect(new StatusEffectInstance(effectType, 95, strength - 1), player);
+                var effectInstance = player.getStatusEffect(effectType);
+                if (effectInstance == null || effectInstance.isDurationBelow(durationMinimum)) {
+                    player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, strength - 1), player);
+                }
             }
         }
     }
