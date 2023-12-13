@@ -1,21 +1,24 @@
 package dev.foxgirl.trimeffects;
 
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.*;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.server.network.ServerPlayerEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class TrimEffects implements ModInitializer {
 
@@ -52,7 +55,9 @@ public final class TrimEffects implements ModInitializer {
         return ArmorTrim.CODEC.parse(RegistryOps.of(NbtOps.INSTANCE, manager), nbt).result().orElse(null);
     }
 
-    public void handlePlayerTick(ServerPlayerEntity player) {
+    private static final Map<UUID, Integer> absorptionStunTicks = new HashMap<>();
+
+    public void handleTick(LivingEntity player) {
         var manager = player.getWorld().getRegistryManager();
 
         var armor = (List<ItemStack>) player.getArmorItems();
@@ -76,11 +81,27 @@ public final class TrimEffects implements ModInitializer {
         int durationMinimum = (int) ((getConfig().getSecondsMinimum() + 0.75) * 20.0);
 
         if (effect != null && strength != null && strength > 0) {
+            int amplifier = strength - 1;
             var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);
             if (effectType != null) {
                 var effectInstance = player.getStatusEffect(effectType);
-                if (effectInstance == null || effectInstance.isDurationBelow(durationMinimum)) {
-                    player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, strength - 1), player);
+                if (
+                    effectInstance == null ||
+                    effectInstance.getAmplifier() < amplifier ||
+                    effectInstance.isDurationBelow(durationMinimum)
+                ) {
+                    if (effectType == StatusEffects.ABSORPTION) {
+                        var stunTicks = absorptionStunTicks.get(player.getUuid());
+                        if (stunTicks != null && stunTicks > 0) {
+                            absorptionStunTicks.put(player.getUuid(), stunTicks - 1);
+                            return;
+                        }
+                        if (effectInstance != null && player.getAbsorptionAmount() < player.getMaxAbsorption()) {
+                            absorptionStunTicks.put(player.getUuid(), (int) (getConfig().getAbsorptionStunSeconds() * 2.0));
+                            return;
+                        }
+                    }
+                    player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, amplifier), player);
                 }
             }
         }

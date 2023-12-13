@@ -25,6 +25,8 @@ public final class Config {
     public double secondsMaximum = 14.0;
     public double secondsMinimum = 12.0;
 
+    public double absorptionStunSeconds = 10.0;
+
     public @NotNull Map<String, String> effects = new LinkedHashMap<>();
     public @NotNull Map<String, Integer> strengths = new LinkedHashMap<>();
 
@@ -39,12 +41,15 @@ public final class Config {
         private final double secondsMaximum;
         private final double secondsMinimum;
 
+        private final double absorptionStunSeconds;
+
         private final Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> effects = new LinkedHashMap<>();
         private final Map<RegistryKey<ArmorTrimMaterial>, Integer> strengths = new LinkedHashMap<>();
 
         private Parsed(@NotNull Config config) {
             secondsMaximum = config.secondsMaximum;
             secondsMinimum = config.secondsMinimum;
+            absorptionStunSeconds = config.absorptionStunSeconds;
             for (var entry : config.effects.entrySet()) {
                 var key = entry.getKey();
                 var value = entry.getValue();
@@ -67,6 +72,10 @@ public final class Config {
         }
         public double getSecondsMinimum() {
             return secondsMinimum;
+        }
+
+        public double getAbsorptionStunSeconds() {
+            return absorptionStunSeconds;
         }
 
         public @NotNull Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> getEffects() {
