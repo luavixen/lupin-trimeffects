@@ -21,6 +21,10 @@ loom {
 
 repositories {
     mavenCentral()
+    maven {
+        name = 'Neoforged'
+        url "https://maven.neoforged.net/releases/"
+    }
 }
 
 configurations {
