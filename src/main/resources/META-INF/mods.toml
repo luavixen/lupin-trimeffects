@@ -13,10 +13,13 @@ displayURL = "https://legacy.curseforge.com/minecraft/mc-mods/trimseffects"
 authors = "lupiiin_, luavixen <lua@foxgirl.dev> (https://foxgirl.dev/)"
 description = "Makes armor trims grant special effects."
 
+[[mixins]]
+config = "trimeffects.mixins.json"
+
 [[dependencies.trimeffects]]
-modId = "forge"
+modId = "neoforge"
 mandatory = true
-versionRange = "[46,)"
+versionRange = "[20.2,)"
 ordering = "NONE"
 side = "BOTH"
 
