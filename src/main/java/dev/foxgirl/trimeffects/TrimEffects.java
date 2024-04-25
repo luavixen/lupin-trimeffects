@@ -1,6 +1,8 @@
 package dev.foxgirl.trimeffects;
 
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -45,20 +47,27 @@ public final class TrimEffects implements ModInitializer {
         config = Config.read().parse();
     }
 
+    public static @NotNull DynamicRegistryManager getRegistryManager(@NotNull Entity entity) {
+        return entity.getWorld().getRegistryManager();
+    }
+
     public static <T> @NotNull RegistryKey<T> getKey(@NotNull RegistryEntry<T> entry) {
         return entry.getKey().orElseThrow();
     }
 
     public static @Nullable ArmorTrim getTrim(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
+        return stack.get(DataComponentTypes.TRIM);
+        /*
         var nbt = stack.getSubNbt("Trim");
         if (nbt == null || !stack.isIn(ItemTags.TRIMMABLE_ARMOR)) return null;
         return ArmorTrim.CODEC.parse(RegistryOps.of(NbtOps.INSTANCE, manager), nbt).result().orElse(null);
+        */
     }
 
     private static final Map<UUID, Integer> absorptionStunTicks = new HashMap<>();
 
     public void handleTick(LivingEntity player) {
-        var manager = player.getWorld().getRegistryManager();
+        var manager = getRegistryManager(player);
 
         var armor = (List<ItemStack>) player.getArmorItems();
 
@@ -82,15 +91,16 @@ public final class TrimEffects implements ModInitializer {
 
         if (effect != null && strength != null && strength > 0) {
             int amplifier = strength - 1;
-            var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);
-            if (effectType != null) {
-                var effectInstance = player.getStatusEffect(effectType);
+            var effectTypeEntryOptional = manager.get(RegistryKeys.STATUS_EFFECT).getEntry(effect);
+            if (effectTypeEntryOptional.isPresent()) {
+                var effectTypeEntry = effectTypeEntryOptional.get();
+                var effectInstance = player.getStatusEffect(effectTypeEntry);
                 if (
                     effectInstance == null ||
                     effectInstance.getAmplifier() < amplifier ||
                     effectInstance.isDurationBelow(durationMinimum)
                 ) {
-                    if (effectType == StatusEffects.ABSORPTION) {
+                    if (effectTypeEntry.matches(StatusEffects.ABSORPTION)) {
                         var stunTicks = absorptionStunTicks.get(player.getUuid());
                         if (stunTicks != null && stunTicks > 0) {
                             absorptionStunTicks.put(player.getUuid(), stunTicks - 1);
@@ -101,7 +111,7 @@ public final class TrimEffects implements ModInitializer {
                             return;
                         }
                     }
-                    player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, amplifier), player);
+                    player.addStatusEffect(new StatusEffectInstance(effectTypeEntry, durationMaximum, amplifier), player);
                 }
             }
         }
