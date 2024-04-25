@@ -1,5 +1,5 @@
 plugins {
-    id 'dev.architectury.loom' version '1.4.369'
+    id 'dev.architectury.loom' version '1.6.394'
 }
 
 group = project.mod_group
@@ -28,17 +28,20 @@ configurations {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_version}:v2"
+    mappings loom.layered {
+        it.mappings("net.fabricmc:yarn:1.20.5+build.1:v2")
+        it.mappings("dev.architectury:yarn-mappings-patch-neoforge:1.20.5+build.3")
+    }
     neoForge "net.neoforged:neoforge:${project.neoforge_version}"
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 compileJava {
-    options.release = 17
+    options.release = 21
     options.encoding = 'UTF-8'
 }
 
