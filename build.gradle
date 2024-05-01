@@ -1,5 +1,5 @@
 plugins {
-    id 'dev.architectury.loom' version '1.2.342'
+    id 'dev.architectury.loom' version '1.6.394'
 }
 
 group = project.mod_group
@@ -45,8 +45,8 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 compileJava {

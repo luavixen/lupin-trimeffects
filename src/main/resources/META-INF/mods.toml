@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[1,)"
+loaderVersion = "[50,)"
 
 license = "UNLICENSED"
 
@@ -16,13 +16,13 @@ description = "Makes armor trims grant special effects."
 [[dependencies.trimeffects]]
 modId = "forge"
 mandatory = true
-versionRange = "[46,)"
+versionRange = "[50,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.trimeffects]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.20,)"
+versionRange = "[1.20.5,)"
 ordering = "NONE"
 side = "BOTH"
