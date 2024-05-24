@@ -46,7 +46,7 @@ compileJava {
 }
 
 processResources {
-    filesMatching("META-INF/neoforge.mods.toml") {
+    filesMatching(['META-INF/neoforge.mods.toml', 'META-INF/mods.toml']) {
         expand 'version': version
     }
 }
