@@ -27,6 +27,9 @@ public final class Config {
 
     public double absorptionStunSeconds = 10.0;
 
+    public int minimumMatchingTrims = 4;
+    public boolean enableCombinedEffects = false;
+
     public @NotNull Map<String, String> effects = new LinkedHashMap<>();
     public @NotNull Map<String, Integer> strengths = new LinkedHashMap<>();
 
@@ -43,6 +46,9 @@ public final class Config {
 
         private final double absorptionStunSeconds;
 
+        private final int minimumMatchingTrims;
+        private final boolean enableCombinedEffects;
+
         private final Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> effects = new LinkedHashMap<>();
         private final Map<RegistryKey<ArmorTrimMaterial>, Integer> strengths = new LinkedHashMap<>();
 
@@ -50,6 +56,8 @@ public final class Config {
             secondsMaximum = config.secondsMaximum;
             secondsMinimum = config.secondsMinimum;
             absorptionStunSeconds = config.absorptionStunSeconds;
+            minimumMatchingTrims = config.minimumMatchingTrims;
+            enableCombinedEffects = config.enableCombinedEffects;
             for (var entry : config.effects.entrySet()) {
                 var key = entry.getKey();
                 var value = entry.getValue();
@@ -76,6 +84,13 @@ public final class Config {
 
         public double getAbsorptionStunSeconds() {
             return absorptionStunSeconds;
+        }
+
+        public int getMinimumMatchingTrims() {
+            return minimumMatchingTrims;
+        }
+        public boolean isEnableCombinedEffects() {
+            return enableCombinedEffects;
         }
 
         public @NotNull Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> getEffects() {
@@ -105,6 +120,14 @@ public final class Config {
         DEFAULT.effects.put("silence", "night_vision");
         DEFAULT.effects.put("raiser", "saturation");
         DEFAULT.effects.put("host", "glowing");
+        DEFAULT.strengths.put("copper", 0);
+        DEFAULT.strengths.put("iron", 0);
+        DEFAULT.strengths.put("redstone", 0);
+        DEFAULT.strengths.put("lapis", 0);
+        DEFAULT.strengths.put("quartz", 0);
+        DEFAULT.strengths.put("gold", 0);
+        DEFAULT.strengths.put("emerald", 0);
+        DEFAULT.strengths.put("amethyst", 0);
         DEFAULT.strengths.put("diamond", 1);
         DEFAULT.strengths.put("netherite", 2);
     }
