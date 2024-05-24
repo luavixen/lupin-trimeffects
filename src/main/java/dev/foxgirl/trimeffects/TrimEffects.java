@@ -101,11 +101,11 @@ public final class TrimEffects implements ModInitializer {
                 continue;
             }
             if (getConfig().isEnableCombinedEffects()) {
-                if (Arrays.stream(trims).anyMatch(t -> !trim.equals(t) && trim.getPattern().equals(t.getPattern()))) {
+                if (Arrays.stream(trims).anyMatch(t -> t != null && !trim.equals(t) && trim.getPattern().equals(t.getPattern()))) {
                     continue;
                 }
             } else {
-                if (Arrays.stream(trims).anyMatch(t -> !trim.equals(t) && t != null)) {
+                if (Arrays.stream(trims).anyMatch(t -> t != null && !trim.equals(t))) {
                     continue;
                 }
             }
