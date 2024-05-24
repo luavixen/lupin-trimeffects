@@ -7,13 +7,12 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.item.trim.ArmorTrimMaterial;
+import net.minecraft.item.trim.ArmorTrimPattern;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.ItemTags;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -68,24 +67,66 @@ public final class TrimEffects {
         */
     }
 
-    private static final Map<UUID, Integer> absorptionStunTicks = new HashMap<>();
+    private record Trim(@NotNull ArmorTrim trim) {
+        private static Trim from(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
+            var trim = getTrim(manager, stack);
+            return trim == null ? null : new Trim(trim);
+        }
+
+        private @NotNull RegistryEntry<ArmorTrimPattern> getPattern() {
+            return trim.getPattern();
+        }
+        private @NotNull RegistryEntry<ArmorTrimMaterial> getMaterial() {
+            return trim.getMaterial();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            var that = (Trim) obj;
+            return Objects.equals(this.getPattern(), that.getPattern())
+                && Objects.equals(this.getMaterial(), that.getMaterial());
+        }
+    }
 
     public void handleTick(LivingEntity player) {
         var manager = getRegistryManager(player);
 
         var armor = (List<ItemStack>) player.getArmorItems();
+        var trims = new Trim[armor.size()];
 
-        var trim = getTrim(manager, armor.get(0));
-        if (trim == null) return;
+        for (int i = 0, length = trims.length; i < length; i++) {
+            trims[i] = Trim.from(manager, armor.get(i));
+        }
+
+        for (Trim trim : trims) {
+            if (trim == null) {
+                continue;
+            }
+            if (getConfig().isEnableCombinedEffects()) {
+                if (Arrays.stream(trims).anyMatch(t -> !trim.equals(t) && trim.getPattern().equals(t.getPattern()))) {
+                    continue;
+                }
+            } else {
+                if (Arrays.stream(trims).anyMatch(t -> !trim.equals(t) && t != null)) {
+                    continue;
+                }
+            }
+            int count = (int) Arrays.stream(trims).filter(t -> Objects.equals(t, trim)).count();
+            if (count >= getConfig().getMinimumMatchingTrims()) {
+                handleTickForTrim(player, trim);
+            }
+        }
+    }
+
+    private final Map<UUID, Integer> absorptionStunTicks = new HashMap<>();
+
+    private void handleTickForTrim(LivingEntity player, Trim trim) {
+        var manager = getRegistryManager(player);
 
         var pattern = getKey(trim.getPattern());
         var material = getKey(trim.getMaterial());
-
-        for (int i = 1, size = armor.size(); i < size; i++) {
-            var trimCurrent = getTrim(manager, armor.get(i));
-            if (trimCurrent == null) return;
-            if (pattern != getKey(trimCurrent.getPattern()) || material != getKey(trimCurrent.getMaterial())) return;
-        }
 
         var effect = getConfig().getEffects().get(pattern);
         var strength = getConfig().getStrengths().get(material);
