@@ -3,7 +3,6 @@ package dev.foxgirl.trimeffects;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.item.trim.ArmorTrimMaterial;
 import net.minecraft.item.trim.ArmorTrimPattern;
@@ -19,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public final class Config {
 
@@ -115,11 +115,13 @@ public final class Config {
         DEFAULT.effects.put("coast", "water_breathing");
         DEFAULT.effects.put("dune", "speed");
         DEFAULT.effects.put("sentry", "resistance");
-        DEFAULT.effects.put("wayfinder", "jump_boost");
+        DEFAULT.effects.put("wayfinder", "slow_falling");
         DEFAULT.effects.put("shaper", "saturation");
         DEFAULT.effects.put("silence", "night_vision");
         DEFAULT.effects.put("raiser", "saturation");
         DEFAULT.effects.put("host", "glowing");
+        DEFAULT.effects.put("flow", "jump_boost");
+        DEFAULT.effects.put("bolt", "strength");
         DEFAULT.strengths.put("copper", 0);
         DEFAULT.strengths.put("iron", 0);
         DEFAULT.strengths.put("redstone", 0);
@@ -140,13 +142,14 @@ public final class Config {
             .setLenient()
             .create();
 
-    public static @NotNull Config read() {
-        Path pathDirectory = FabricLoaderImpl.INSTANCE.getConfigDir();
-        Path pathFile = pathDirectory.resolve("trimeffects-config.json");
-        Path pathTemp = pathDirectory.resolve("trimeffects-config.json.tmp");
+    public static @NotNull Config read(@NotNull Path configDirectory) {
+        Objects.requireNonNull(configDirectory, "Argument 'configDirectory'");
+
+        Path filePath = configDirectory.resolve("trimeffects-config.json");
+        Path tempPath = configDirectory.resolve("trimeffects-config.json.tmp");
 
         try {
-            return GSON.fromJson(Files.newBufferedReader(pathFile), Config.class);
+            return GSON.fromJson(Files.newBufferedReader(filePath), Config.class);
         } catch (NoSuchFileException cause) {
             TrimEffects.LOGGER.error("Failed to read config, file not found");
         } catch (IOException cause) {
@@ -158,8 +161,8 @@ public final class Config {
         }
 
         try {
-            Files.writeString(pathTemp, GSON.toJson(DEFAULT));
-            Files.move(pathTemp, pathFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            Files.writeString(tempPath, GSON.toJson(DEFAULT));
+            Files.move(tempPath, filePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException cause) {
             TrimEffects.LOGGER.error("Failed to write new config, IO error", cause);
         } catch (Exception cause) {

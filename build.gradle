@@ -1,45 +1,74 @@
 plugins {
-    id 'fabric-loom' version '1.4.5'
+    id 'architectury-plugin' version '3.4.155'
+    id 'dev.architectury.loom' version '1.6.397' apply false
 }
 
 group = project.mod_group
-archivesBaseName = project.mod_name
-
 version = project.mod_version
 
-repositories {
-    mavenCentral()
+architectury {
+    minecraft = project.minecraft_version
 }
 
-configurations {
-    includeImplementation
+subprojects {
+    apply plugin: 'dev.architectury.loom'
 
-    implementation {
-        extendsFrom includeImplementation
+    dependencies {
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        mappings loom.layered {
+            it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
+            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:${project.yarn_mappings_patch_neoforge}")
+        }
     }
-    include {
-        extendsFrom includeImplementation
+
+    jar {
+        manifest {
+            attributes([
+                'Specification-Title'     : rootProject.mod_name,
+                'Specification-Vendor'    : 'luavixen',
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : 'TrimsEffects',
+                'Implementation-Version'  : rootProject.mod_version,
+                'Implementation-Vendor'   : 'luavixen',
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            ])
+        }
     }
 }
 
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_version}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-}
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'architectury-plugin'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
+    base {
+        archivesName = "${rootProject.mod_name}-${project.name}-${rootProject.minecraft_version}"
+    }
 
-compileJava {
-    options.release = 17
-    options.encoding = 'UTF-8'
-}
+    version = rootProject.mod_version
+    group = rootProject.mod_group
 
-processResources {
-    filesMatching('fabric.mod.json') {
-        expand 'version': version
+    repositories {
+        maven {
+            name = 'Neoforged'
+            url = 'https://maven.neoforged.net/releases/'
+        }
+        mavenCentral()
+    }
+
+    java {
+        withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    compileJava {
+        options.release = 21
+        options.encoding = 'UTF-8'
+    }
+
+    processResources {
+        filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'META-INF/*.mods.toml']) {
+            expand 'version': project.mod_version, 'mcversion': project.minecraft_version_min
+        }
     }
 }

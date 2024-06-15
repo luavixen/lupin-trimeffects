@@ -5,13 +5,15 @@
     "version": "${version}",
 
     "depends": {
-        "java": ">=17",
-        "minecraft": "*",
+        "java": ">=21",
+        "minecraft": ">=${mcversion}",
         "fabricloader": ">=0.14.0"
     },
 
-    "name": "Trim Effects",
+    "name": "TrimsEffects",
     "description": "Makes armor trims grant special effects.",
+
+    "icon": "assets/trimeffects/icon.png",
 
     "license": "UNLICENSED",
     "authors": [
@@ -21,12 +23,18 @@
                 "email": "lua@foxgirl.dev",
                 "website": "https://foxgirl.dev/"
             }
+        },
+        {
+            "name": "Lupin",
+            "contact": {
+                "website": "https://www.youtube.com/@LupinYT"
+            }
         }
     ],
 
     "entrypoints": {
         "main": [
-            "dev.foxgirl.trimeffects.TrimEffects"
+            "dev.foxgirl.trimeffects.TrimEffectsMod"
         ]
     },
     "mixins": [

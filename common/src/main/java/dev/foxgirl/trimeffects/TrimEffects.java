@@ -1,6 +1,5 @@
 package dev.foxgirl.trimeffects;
 
-import net.fabricmc.api.ModInitializer;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -19,19 +18,24 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 
-public final class TrimEffects implements ModInitializer {
+public final class TrimEffects {
 
     public static final Logger LOGGER = LogManager.getLogger("trimeffects");
 
     private static TrimEffects INSTANCE;
 
-    public static TrimEffects getInstance() {
+    public static @NotNull TrimEffects getInstance() {
         return INSTANCE;
     }
 
-    public TrimEffects() {
+    public static @NotNull TrimEffects createInstance() {
+        return new TrimEffects();
+    }
+
+    private TrimEffects() {
         INSTANCE = this;
     }
 
@@ -41,9 +45,8 @@ public final class TrimEffects implements ModInitializer {
         return Objects.requireNonNull(config, "Expression 'config'");
     }
 
-    @Override
-    public void onInitialize() {
-        config = Config.read().parse();
+    public void initialize(@NotNull Path configDirectory) {
+        config = Config.read(configDirectory).parse();
     }
 
     public static @NotNull DynamicRegistryManager getRegistryManager(@NotNull Entity entity) {
