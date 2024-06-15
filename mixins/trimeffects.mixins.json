@@ -1,12 +1,15 @@
 {
     "required": true,
+    "minVersion": "0.8",
     "compatibilityLevel": "JAVA_21",
     "package": "dev.foxgirl.trimeffects.mixin",
     "injectors": {
         "defaultRequire": 1
     },
     "mixins": [
-        "MixinArmorTrim",
         "MixinServerPlayerEntity"
+    ],
+    "client": [
+        "MixinArmorTrim"
     ]
 }
