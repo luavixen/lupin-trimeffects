@@ -1,16 +1,16 @@
 package dev.foxgirl.trimeffects;
 
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.fml.loading.FMLPaths;
 
 @Mod("trimeffects")
 public final class TrimEffectsMod {
 
-    public TrimEffectsMod() {
+    public TrimEffectsMod(IEventBus eventBus) {
         TrimEffects.createInstance();
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
+        eventBus.addListener(this::onCommonSetup);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {

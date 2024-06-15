@@ -63,15 +63,15 @@ public final class Config {
                 var value = entry.getValue();
                 if (value == null || key == null) continue;
                 effects.put(
-                    RegistryKey.of(RegistryKeys.TRIM_PATTERN, new Identifier(key)),
-                    RegistryKey.of(RegistryKeys.STATUS_EFFECT, new Identifier(value))
+                    RegistryKey.of(RegistryKeys.TRIM_PATTERN, Identifier.of(key)),
+                    RegistryKey.of(RegistryKeys.STATUS_EFFECT, Identifier.of(value))
                 );
             }
             for (var entry : config.strengths.entrySet()) {
                 var key = entry.getKey();
                 var value = entry.getValue();
                 if (value == null || key == null) continue;
-                strengths.put(RegistryKey.of(RegistryKeys.TRIM_MATERIAL, new Identifier(key)), value);
+                strengths.put(RegistryKey.of(RegistryKeys.TRIM_MATERIAL, Identifier.of(key)), value);
             }
         }
 

@@ -21,7 +21,7 @@ config = "trimeffects.mixins.json"
 [[dependencies.trimeffects]]
 modId = "neoforge"
 mandatory = true
-versionRange = "[20.5,)"
+versionRange = "[21.0,)"
 ordering = "NONE"
 side = "BOTH"
 
