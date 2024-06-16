@@ -25,7 +25,7 @@ versionRange = "[21.0,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.loadingbackgrounds]]
+[[dependencies.trimeffects]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[${mcversion},)"
