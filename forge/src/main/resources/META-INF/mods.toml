@@ -19,9 +19,9 @@ logoFile = "assets/trimeffects/icon.png"
 config = "trimeffects.mixins.json"
 
 [[dependencies.trimeffects]]
-modId = "neoforge"
+modId = "forge"
 mandatory = true
-versionRange = "[20.2,)"
+versionRange = "[46,)"
 ordering = "NONE"
 side = "BOTH"
 

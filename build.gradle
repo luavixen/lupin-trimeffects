@@ -17,7 +17,7 @@ subprojects {
         minecraft "com.mojang:minecraft:${project.minecraft_version}"
         mappings loom.layered {
             it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
-            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:${project.yarn_mappings_patch_neoforge}")
+            // it.mappings("dev.architectury:yarn-mappings-patch-neoforge:${project.yarn_mappings_patch_neoforge}")
         }
     }
 
@@ -57,12 +57,12 @@ allprojects {
 
     java {
         withSourcesJar()
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     compileJava {
-        options.release = 21
+        options.release = 17
         options.encoding = 'UTF-8'
     }
 
