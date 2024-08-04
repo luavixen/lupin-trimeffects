@@ -119,7 +119,17 @@ public final class TrimEffects {
         }
     }
 
-    private final Map<UUID, Integer> absorptionStunTicks = new HashMap<>();
+    private final Map<UUID, AbsorptionRecord> absorptionRecords = new HashMap<>();
+
+    private static final class AbsorptionRecord {
+        private float previousAmount;
+        private int stunTicks;
+
+        private AbsorptionRecord(LivingEntity player) {
+            this.previousAmount = player.getAbsorptionAmount();
+            this.stunTicks = 0;
+        }
+    }
 
     private void handleTickForTrim(LivingEntity player, Trim trim) {
         var manager = getRegistryManager(player);
@@ -144,6 +154,19 @@ public final class TrimEffects {
                     effectInstance.isDurationBelow(durationMinimum)
                 ) {
                     if (effectType == StatusEffects.ABSORPTION) {
+                        var absorptionRecord = absorptionRecords.computeIfAbsent(player.getUuid(), uuid -> new AbsorptionRecord(player));
+                        float currentAbsorptionAmount = player.getAbsorptionAmount();
+                        float previousAbsorptionAmount = absorptionRecord.previousAmount;
+                        absorptionRecord.previousAmount = currentAbsorptionAmount;
+                        if (absorptionRecord.stunTicks > 0) {
+                            --absorptionRecord.stunTicks;
+                            return;
+                        }
+                        if (effectInstance != null && currentAbsorptionAmount < previousAbsorptionAmount) {
+                            absorptionRecord.stunTicks = (int) (this.getConfig().getAbsorptionStunSeconds() * 20.0);
+                            return;
+                        }
+                        /*
                         var stunTicks = absorptionStunTicks.get(player.getUuid());
                         if (stunTicks != null && stunTicks > 0) {
                             absorptionStunTicks.put(player.getUuid(), stunTicks - 1);
@@ -153,6 +176,7 @@ public final class TrimEffects {
                             absorptionStunTicks.put(player.getUuid(), (int) (getConfig().getAbsorptionStunSeconds() * 2.0));
                             return;
                         }
+                        */
                     }
                     player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, amplifier), player);
                 }
