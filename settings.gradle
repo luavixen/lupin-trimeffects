@@ -1,19 +1,19 @@
 pluginManagement {
     repositories {
         maven {
-            name = 'Fabric'
+            name = 'Fabric Maven'
             url = 'https://maven.fabricmc.net/'
         }
         maven {
-            name = 'Forge'
+            name = 'Forge Maven'
             url = 'https://files.minecraftforge.net/maven/'
         }
         maven {
-            name = 'Architectury'
+            name = 'Architectury Maven'
             url = 'https://maven.architectury.dev/'
         }
         maven {
-            name = 'Neoforged'
+            name = 'NeoForged Maven'
             url = 'https://maven.neoforged.net/releases/'
         }
         mavenCentral()
@@ -26,3 +26,4 @@ rootProject.name = "trimeffects"
 include("common")
 include("fabric")
 include("neoforge")
+include("forge")
