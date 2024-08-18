@@ -178,6 +178,14 @@ public final class TrimEffects {
                         }
                         */
                     }
+                    if (effectType == StatusEffects.REGENERATION) {
+                        if (
+                            effectInstance != null && !effectInstance.isDurationBelow(50) &&
+                            player.getHealth() < player.getMaxHealth()
+                        ) {
+                            return;
+                        }
+                    }
                     player.addStatusEffect(new StatusEffectInstance(effectType, durationMaximum, amplifier), player);
                 }
             }
