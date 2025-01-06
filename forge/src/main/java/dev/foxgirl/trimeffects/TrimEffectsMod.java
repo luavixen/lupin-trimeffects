@@ -9,12 +9,11 @@ import net.minecraftforge.fml.loading.FMLPaths;
 public final class TrimEffectsMod {
 
     public TrimEffectsMod() {
-        TrimEffects.createInstance();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
-        TrimEffects.getInstance().initialize(FMLPaths.CONFIGDIR.get());
+        TrimEffects2.INSTANCE.initialize(FMLPaths.CONFIGDIR.get());
     }
 
 }

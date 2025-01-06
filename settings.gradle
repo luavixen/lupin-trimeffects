@@ -1,6 +1,10 @@
 pluginManagement {
     repositories {
         maven {
+            name = 'Architectury Maven'
+            url = 'https://maven.architectury.dev/'
+        }
+        maven {
             name = 'Fabric Maven'
             url = 'https://maven.fabricmc.net/'
         }
@@ -9,21 +13,16 @@ pluginManagement {
             url = 'https://files.minecraftforge.net/maven/'
         }
         maven {
-            name = 'Architectury Maven'
-            url = 'https://maven.architectury.dev/'
-        }
-        maven {
             name = 'NeoForged Maven'
             url = 'https://maven.neoforged.net/releases/'
         }
-        mavenCentral()
         gradlePluginPortal()
     }
 }
 
-rootProject.name = "trimeffects"
+rootProject.name = 'trimeffects'
 
-include("common")
-include("fabric")
-include("neoforge")
-include("forge")
+include 'common'
+include 'fabric'
+include 'neoforge'
+include 'forge'

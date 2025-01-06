@@ -1,14 +1,16 @@
 package dev.foxgirl.trimeffects.mixin;
 
-import dev.foxgirl.trimeffects.TrimEffects;
+import dev.foxgirl.trimeffects.ArmorTrimProxy;
+import dev.foxgirl.trimeffects.TrimEffects2;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.item.trim.ArmorTrimMaterial;
+import net.minecraft.item.trim.ArmorTrimPattern;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Consumer;
 
 @Mixin(ArmorTrim.class)
-public abstract class MixinArmorTrim {
+public abstract class MixinArmorTrim implements ArmorTrimProxy {
 
     /*
     @Inject(method = "appendTooltip", at = @At("TAIL"))
@@ -52,7 +54,7 @@ public abstract class MixinArmorTrim {
     }
     */
 
-    @Shadow @Final
+    @Shadow(aliases = { "showInTooltip", "field_49279", "comp_3181" })
     private boolean showInTooltip;
 
     @Inject(method = "appendTooltip", at = @At("TAIL"))
@@ -63,30 +65,29 @@ public abstract class MixinArmorTrim {
             var player = MinecraftClient.getInstance().player;
             if (player == null) return;
 
-            var config = TrimEffects.getInstance().getConfig();
+            var details = TrimEffects2.INSTANCE.createTrimDetails(self, TrimEffects2.getStatusEffectRegistry(player));
+            if (details == null) return;
 
-            var pattern = self.getPattern();
-            var material = self.getMaterial();
-
-            var effect = config.getEffects().get(TrimEffects.getKey(pattern));
-            var strength = config.getStrengths().get(TrimEffects.getKey(material));
-
-            if (effect != null && strength != null && strength > 0) {
-                var effectType = TrimEffects.getRegistryManager(player).get(RegistryKeys.STATUS_EFFECT).get(effect);
-                if (effectType != null) {
-                    var text = ScreenTexts.space().append(effectType.getName());
-                    if (strength > 1) {
-                        text.append(ScreenTexts.SPACE);
-                        if (strength <= 10) {
-                            text.append(Text.translatable("enchantment.level." + strength));
-                        } else {
-                            text.append(strength.toString());
-                        }
-                    }
-                    tooltip.accept(text.fillStyle(material.value().description().getStyle()));
-                }
-            }
+            tooltip.accept(
+                ScreenTexts.space()
+                    .append(details.effect().value().getName())
+                    .fillStyle(TrimEffects2.getArmorTrimMaterial(self).value().description().getStyle())
+            );
         }
+    }
+
+    @Shadow(aliases = { "material", "field_41998", "comp_3179" })
+    private RegistryEntry<ArmorTrimMaterial> material;
+    @Shadow(aliases = { "pattern", "field_41999", "comp_3180" })
+    private RegistryEntry<ArmorTrimPattern> pattern;
+
+    @Override
+    public RegistryEntry<ArmorTrimMaterial> trimeffects$getMaterial() {
+        return material;
+    }
+    @Override
+    public RegistryEntry<ArmorTrimPattern> trimeffects$getPattern() {
+        return pattern;
     }
 
 }

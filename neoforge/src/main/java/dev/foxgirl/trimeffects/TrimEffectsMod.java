@@ -9,12 +9,11 @@ import net.neoforged.fml.loading.FMLPaths;
 public final class TrimEffectsMod {
 
     public TrimEffectsMod(IEventBus eventBus) {
-        TrimEffects.createInstance();
         eventBus.addListener(this::onCommonSetup);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
-        TrimEffects.getInstance().initialize(FMLPaths.CONFIGDIR.get());
+        TrimEffects2.INSTANCE.initialize(FMLPaths.CONFIGDIR.get());
     }
 
 }
