@@ -10,11 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 
 public final class Config {
 
-    public Map<String, String> effects;
+    public Map<String, List<String>> effects;
 
     public int maxEffectLevel;
     public double absorptionStunSeconds;
@@ -22,30 +23,50 @@ public final class Config {
 
     public static @NotNull String DEFAULT =
         """
+        // TrimsEffects v2 config JSON file
         {
+
+          // Mapping of armor trim patterns to their associated potion effects
           "effects": {
-            "sentry": "resistance",
-            "dune": "speed",
-            "coast": "water_breathing",
-            "wild": "hero_of_the_village",
-            "ward": "absorption",
-            "eye": "regeneration",
-            "vex": "invisibility",
-            "tide": "conduit_power",
-            "snout": "fire_resistance",
-            "rib": "haste",
-            "spire": "strength",
-            "wayfinder": "slow_falling",
-            "shaper": "luck",
-            "silence": "health_boost",
-            "raiser": "saturation",
-            "host": "glowing",
-            "flow": "jump_boost",
-            "bolt": "dolphins_grace"
+            // Simple example:
+            // "rib": ["strength"],
+            // Multiple effects example:
+            // "dune": ["speed", "jump_boost"],
+            // Fully-qualified identifiers example:
+            // "minecraft:eye": ["minecraft:invisibility"]",
+            // Custom modded patterns and effects example:
+            // "fancymod:fancytrim": ["fancymod:fancyeffect"]",
+
+            // Default values:
+            "sentry": ["resistance"],
+            "dune": ["speed"],
+            "coast": ["water_breathing"],
+            "wild": ["hero_of_the_village"],
+            "ward": ["absorption"],
+            "eye": ["regeneration"],
+            "vex": ["invisibility"],
+            "tide": ["conduit_power"],
+            "snout": ["fire_resistance"],
+            "rib": ["haste"],
+            "spire": ["strength"],
+            "wayfinder": ["slow_falling"],
+            "shaper": ["luck"],
+            "silence": ["health_boost"],
+            "raiser": ["saturation"],
+            "host": ["glowing"],
+            "flow": ["jump_boost"],
+            "bolt": ["dolphins_grace"]
           },
+
+          // Maximum level of any effect applied to a player, default 2
           "maxEffectLevel": 2,
+
+          // How long a player needs to wait for absorption to refresh, in seconds, default 12.0
           "absorptionStunSeconds": 12.0,
+
+          // Whether resin gives night vision, default true
           "resinGivesNightVision": true
+
         }
         """;
 
@@ -61,28 +82,33 @@ public final class Config {
         Path filePath = directory.resolve("trimseffects-config2.json");
         Path tempPath = directory.resolve("trimseffects-config2.json.tmp");
 
-        try {
-            return GSON.fromJson(Files.newBufferedReader(filePath), Config.class);
+        try (var reader = Files.newBufferedReader(filePath)) {
+            return GSON.fromJson(reader, Config.class);
         } catch (NoSuchFileException cause) {
-            TrimEffects2.LOGGER.warn("(TrimsEffects) Failed to read config, file not found: {}", filePath);
-        } catch (IOException cause) {
-            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config, IO error", cause);
+            TrimEffects2.LOGGER.warn("(TrimsEffects) Config file not found: {}", filePath);
+            writeDefaultConfig(filePath, tempPath);
         } catch (JsonParseException cause) {
-            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config, JSON error", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Config file is invalid! {}", cause.getMessage());
+        } catch (IOException cause) {
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config file, IO error", cause);
         } catch (Exception cause) {
-            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config file", cause);
         }
 
+        TrimEffects2.LOGGER.warn("(TrimsEffects) Using default config values");
+
+        return GSON.fromJson(DEFAULT, Config.class);
+    }
+
+    private static void writeDefaultConfig(@NotNull Path filePath, @NotNull Path tempPath) {
         try {
             Files.writeString(tempPath, DEFAULT);
             Files.move(tempPath, filePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException cause) {
-            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write new config, IO error", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write default config file, IO error", cause);
         } catch (Exception cause) {
-            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write new config", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write default config file", cause);
         }
-
-        return GSON.fromJson(DEFAULT, Config.class);
     }
 
 }

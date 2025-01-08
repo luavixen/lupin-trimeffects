@@ -9,10 +9,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(StatusEffectInstance.class)
-public abstract class MixinStatusEffectInstance {
+public abstract class MixinStatusEffectInstance implements TrimEffects2.DurationSetter {
 
     @Shadow
     private int duration;
+
+    @Override
+    public void trimeffects$setDuration(int duration) {
+        this.duration = duration;
+    }
 
     @Inject(method = "isInfinite()Z", at = @At("HEAD"), cancellable = true)
     private void trimeffects$beforeIsInfinite(CallbackInfoReturnable<Boolean> info) {

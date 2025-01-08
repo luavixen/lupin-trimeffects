@@ -1,16 +1,13 @@
 package dev.foxgirl.trimeffects.mixin;
 
-import dev.foxgirl.trimeffects.ArmorTrimProxy;
 import dev.foxgirl.trimeffects.TrimEffects2;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.item.trim.ArmorTrimMaterial;
-import net.minecraft.item.trim.ArmorTrimPattern;
-import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Consumer;
 
 @Mixin(ArmorTrim.class)
-public abstract class MixinArmorTrim implements ArmorTrimProxy {
+public abstract class MixinArmorTrim {
 
     /*
     @Inject(method = "appendTooltip", at = @At("TAIL"))
@@ -54,7 +51,7 @@ public abstract class MixinArmorTrim implements ArmorTrimProxy {
     }
     */
 
-    @Shadow(aliases = { "showInTooltip", "field_49279", "comp_3181" })
+    @Shadow @Final
     private boolean showInTooltip;
 
     @Inject(method = "appendTooltip", at = @At("TAIL"))
@@ -68,26 +65,14 @@ public abstract class MixinArmorTrim implements ArmorTrimProxy {
             var details = TrimEffects2.INSTANCE.createTrimDetails(self, TrimEffects2.getStatusEffectRegistry(player));
             if (details == null) return;
 
-            tooltip.accept(
-                ScreenTexts.space()
-                    .append(details.effect().value().getName())
-                    .fillStyle(TrimEffects2.getArmorTrimMaterial(self).value().description().getStyle())
-            );
+            for (var effect : details.effects()) {
+                tooltip.accept(
+                    ScreenTexts.space()
+                        .append(effect.value().getName())
+                        .fillStyle(self.getMaterial().value().description().getStyle())
+                );
+            }
         }
-    }
-
-    @Shadow(aliases = { "material", "field_41998", "comp_3179" })
-    private RegistryEntry<ArmorTrimMaterial> material;
-    @Shadow(aliases = { "pattern", "field_41999", "comp_3180" })
-    private RegistryEntry<ArmorTrimPattern> pattern;
-
-    @Override
-    public RegistryEntry<ArmorTrimMaterial> trimeffects$getMaterial() {
-        return material;
-    }
-    @Override
-    public RegistryEntry<ArmorTrimPattern> trimeffects$getPattern() {
-        return pattern;
     }
 
 }
