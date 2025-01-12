@@ -55,8 +55,8 @@ public final class TrimEffects2 {
         return entry.getKey().orElseThrow();
     }
 
-    public static @NotNull RegistryKey<StatusEffect> getRegistryKey(@NotNull StatusEffect effect) {
-        return getRegistryKey(effect.getRegistryEntry());
+    public static @NotNull RegistryKey<StatusEffect> getRegistryKey(@NotNull Registry<StatusEffect> registry, @NotNull StatusEffect effect) {
+        return getRegistryKey(registry.getEntry(effect));
     }
 
     public static @Nullable ArmorTrim getArmorTrim(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
@@ -206,17 +206,12 @@ public final class TrimEffects2 {
         if (!config.applyToMobs && !(entity instanceof PlayerEntity)) return;
 
         DynamicRegistryManager manager = getRegistryManager(entity);
-
-        Registry<StatusEffect> registry = null;
+        Registry<StatusEffect> registry = getStatusEffectRegistry(manager);
         ArrayList<TrimDetails> trims = null;
 
         for (ItemStack stack : entity.getArmorItems()) {
             var trim = getArmorTrim(manager, stack);
             if (trim != null) {
-                if (registry == null) {
-                    registry = getStatusEffectRegistry(manager);
-                }
-
                 var details = createTrimDetails(trim, registry);
                 if (details == null) continue;
 
@@ -229,9 +224,9 @@ public final class TrimEffects2 {
         }
 
         if (trims != null && !trims.isEmpty()) {
-            updateEffectsWithTrimDetails(entity, trims);
+            updateEffectsWithTrimDetails(registry, entity, trims);
         } else {
-            removeEffectsFromTrims(entity, null);
+            removeEffectsFromTrims(registry, entity, null);
         }
     }
 
@@ -269,12 +264,12 @@ public final class TrimEffects2 {
         }
     }
 
-    private List<EffectDetails> collectEffectDetails(List<TrimDetails> trims) {
+    private List<EffectDetails> collectEffectDetails(Registry<StatusEffect> registry, List<TrimDetails> trims) {
         ArrayList<EffectDetails> effects = new ArrayList<>(trims.size());
 
         for (TrimDetails trimDetails : trims) {
             for (StatusEffect effect : trimDetails.effects()) {
-                RegistryKey<StatusEffect> effectKey = getRegistryKey(effect);
+                RegistryKey<StatusEffect> effectKey = getRegistryKey(registry, effect);
 
                 boolean exists = false;
 
@@ -343,8 +338,8 @@ public final class TrimEffects2 {
         return false;
     }
 
-    private void updateEffectsWithTrimDetails(LivingEntity entity, List<TrimDetails> trims) {
-        List<EffectDetails> effects = collectEffectDetails(trims);
+    private void updateEffectsWithTrimDetails(Registry<StatusEffect> registry, LivingEntity entity, List<TrimDetails> trims) {
+        List<EffectDetails> effects = collectEffectDetails(registry, trims);
 
         for (EffectDetails effectDetails : effects) {
             var instance = entity.getStatusEffect(effectDetails.effect);
@@ -371,11 +366,11 @@ public final class TrimEffects2 {
             }
         }
 
-        removeEffectsFromTrims(entity, effects);
+        removeEffectsFromTrims(registry, entity, effects);
     }
 
-    private boolean isEffectExcluded(List<EffectDetails> excludedEffects, StatusEffect effect) {
-        RegistryKey<StatusEffect> effectKey = getRegistryKey(effect);
+    private boolean isEffectExcluded(Registry<StatusEffect> registry, List<EffectDetails> excludedEffects, StatusEffect effect) {
+        RegistryKey<StatusEffect> effectKey = getRegistryKey(registry, effect);
         for (EffectDetails effectDetails : excludedEffects) {
             if (effectKey.equals(effectDetails.effectKey)) {
                 return true;
@@ -384,14 +379,14 @@ public final class TrimEffects2 {
         return false;
     }
 
-    private void removeEffectsFromTrims(LivingEntity entity, @Nullable List<EffectDetails> excludedEffects) {
+    private void removeEffectsFromTrims(Registry<StatusEffect> registry, LivingEntity entity, @Nullable List<EffectDetails> excludedEffects) {
         ObjectArraySet<StatusEffect> effectsToRemove = null;
 
         for (StatusEffectInstance instance : entity.getStatusEffects()) {
             if (instance.getDuration() == STATUS_EFFECT_DURATION_MARKER) {
                 var effect = instance.getEffectType();
 
-                if (excludedEffects != null && isEffectExcluded(excludedEffects, effect)) {
+                if (excludedEffects != null && isEffectExcluded(registry, excludedEffects, effect)) {
                     continue;
                 }
 
