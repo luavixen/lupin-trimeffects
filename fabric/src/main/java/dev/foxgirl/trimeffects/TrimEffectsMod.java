@@ -6,12 +6,11 @@ import net.fabricmc.loader.impl.FabricLoaderImpl;
 public final class TrimEffectsMod implements ModInitializer {
 
     public TrimEffectsMod() {
-        TrimEffects.createInstance();
     }
 
     @Override
     public void onInitialize() {
-        TrimEffects.getInstance().initialize(FabricLoaderImpl.INSTANCE.getConfigDir());
+        TrimEffects2.INSTANCE.initialize(FabricLoaderImpl.INSTANCE.getConfigDir());
     }
 
 }

@@ -7,7 +7,7 @@ Find downloads on [CurseForge](https://www.curseforge.com/minecraft/mc-mods/trim
 Makes armor trims grant special effects.
 
 # License
-Copyright (C) 2023-2024 Lua MacDougall. All rights reserved.
+Copyright (C) 2023-2025 Lua MacDougall. All rights reserved.
 
 This source code (and related resources) are provided for personal educational
 use only. You are permitted to view and study the code solely for your own

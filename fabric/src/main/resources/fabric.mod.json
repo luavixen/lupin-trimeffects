@@ -6,7 +6,7 @@
 
     "depends": {
         "java": ">=17",
-        "minecraft": ">=${mcversion}",
+        "minecraft": "${minecraft_version_semver}",
         "fabricloader": ">=0.14.0"
     },
 

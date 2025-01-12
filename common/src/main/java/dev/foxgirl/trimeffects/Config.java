@@ -3,12 +3,6 @@ package dev.foxgirl.trimeffects;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.item.trim.ArmorTrimMaterial;
-import net.minecraft.item.trim.ArmorTrimPattern;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,123 +10,75 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public final class Config {
 
-    public double secondsMaximum = 14.0;
-    public double secondsMinimum = 12.0;
+    public Map<String, List<String>> effects;
 
-    public double absorptionStunSeconds = 10.0;
+    public boolean applyToMobs;
 
-    public int minimumMatchingTrims = 4;
-    public boolean enableCombinedEffects = false;
+    public List<Integer> matchingEffectLevels;
 
-    public @NotNull Map<String, String> effects = new LinkedHashMap<>();
-    public @NotNull Map<String, Integer> strengths = new LinkedHashMap<>();
+    public double absorptionStunSeconds;
+    public boolean resinGivesNightVision;
 
-    public Config() {}
+    public static @NotNull String DEFAULT =
+        """
+        // TrimsEffects v2 config JSON file
+        {
 
-    public @NotNull Parsed parse() {
-        return new Parsed(this);
-    }
+          // Mapping of armor trim patterns to their associated potion effects
+          "effects": {
+            // Simple example:
+            // "rib": ["strength"],
+            // Multiple effects example:
+            // "dune": ["speed", "jump_boost"],
+            // Fully-qualified identifiers example:
+            // "minecraft:eye": ["minecraft:invisibility"]",
+            // Custom modded patterns and effects example:
+            // "fancymod:fancytrim": ["fancymod:fancyeffect"]",
 
-    public static final class Parsed {
+            // Default values:
+            "sentry": ["resistance"],
+            "dune": ["speed"],
+            "coast": ["water_breathing"],
+            "wild": ["hero_of_the_village"],
+            "ward": ["absorption"],
+            "eye": ["regeneration"],
+            "vex": ["invisibility"],
+            "tide": ["conduit_power"],
+            "snout": ["fire_resistance"],
+            "rib": ["haste"],
+            "spire": ["strength"],
+            "wayfinder": ["slow_falling"],
+            "shaper": ["luck"],
+            "silence": ["health_boost"],
+            "raiser": ["saturation"],
+            "host": ["glowing"],
+            "flow": ["jump_boost"],
+            "bolt": ["dolphins_grace"]
+          },
 
-        private final double secondsMaximum;
-        private final double secondsMinimum;
+          // Whether mobs wearing trimmed armor should get the same
+          // status effects as players, default true
+          "applyToMobs": true,
 
-        private final double absorptionStunSeconds;
+          // Association between number of matching status effects per
+          // armor piece / armor trim to what level the status effect
+          // should have, default [1, 1, 1, 2]
+          "matchingEffectLevels": [1, 1, 1, 2],
 
-        private final int minimumMatchingTrims;
-        private final boolean enableCombinedEffects;
+          // How long a player needs to wait for absorption to refresh,
+          // in seconds, default 12.0
+          "absorptionStunSeconds": 12.0,
 
-        private final Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> effects = new LinkedHashMap<>();
-        private final Map<RegistryKey<ArmorTrimMaterial>, Integer> strengths = new LinkedHashMap<>();
+          // Whether resin gives night vision, default true
+          "resinGivesNightVision": true
 
-        private Parsed(@NotNull Config config) {
-            secondsMaximum = config.secondsMaximum;
-            secondsMinimum = config.secondsMinimum;
-            absorptionStunSeconds = config.absorptionStunSeconds;
-            minimumMatchingTrims = config.minimumMatchingTrims;
-            enableCombinedEffects = config.enableCombinedEffects;
-            for (var entry : config.effects.entrySet()) {
-                var key = entry.getKey();
-                var value = entry.getValue();
-                if (value == null || key == null) continue;
-                effects.put(
-                    RegistryKey.of(RegistryKeys.TRIM_PATTERN, new Identifier(key)),
-                    RegistryKey.of(RegistryKeys.STATUS_EFFECT, new Identifier(value))
-                );
-            }
-            for (var entry : config.strengths.entrySet()) {
-                var key = entry.getKey();
-                var value = entry.getValue();
-                if (value == null || key == null) continue;
-                strengths.put(RegistryKey.of(RegistryKeys.TRIM_MATERIAL, new Identifier(key)), value);
-            }
         }
-
-        public double getSecondsMaximum() {
-            return secondsMaximum;
-        }
-        public double getSecondsMinimum() {
-            return secondsMinimum;
-        }
-
-        public double getAbsorptionStunSeconds() {
-            return absorptionStunSeconds;
-        }
-
-        public int getMinimumMatchingTrims() {
-            return minimumMatchingTrims;
-        }
-        public boolean isEnableCombinedEffects() {
-            return enableCombinedEffects;
-        }
-
-        public @NotNull Map<RegistryKey<ArmorTrimPattern>, RegistryKey<StatusEffect>> getEffects() {
-            return effects;
-        }
-        public @NotNull Map<RegistryKey<ArmorTrimMaterial>, Integer> getStrengths() {
-            return strengths;
-        }
-
-    }
-
-    private static final Config DEFAULT = new Config();
-    static {
-        DEFAULT.effects.put("spire", "strength");
-        DEFAULT.effects.put("eye", "regeneration");
-        DEFAULT.effects.put("snout", "fire_resistance");
-        DEFAULT.effects.put("rib", "haste");
-        DEFAULT.effects.put("vex", "invisibility");
-        DEFAULT.effects.put("ward", "absorption");
-        DEFAULT.effects.put("tide", "luck");
-        DEFAULT.effects.put("wild", "hero_of_the_village");
-        DEFAULT.effects.put("coast", "water_breathing");
-        DEFAULT.effects.put("dune", "speed");
-        DEFAULT.effects.put("sentry", "resistance");
-        DEFAULT.effects.put("wayfinder", "slow_falling");
-        DEFAULT.effects.put("shaper", "saturation");
-        DEFAULT.effects.put("silence", "night_vision");
-        DEFAULT.effects.put("raiser", "saturation");
-        DEFAULT.effects.put("host", "glowing");
-        DEFAULT.effects.put("flow", "jump_boost");
-        DEFAULT.effects.put("bolt", "strength");
-        DEFAULT.strengths.put("copper", 0);
-        DEFAULT.strengths.put("iron", 0);
-        DEFAULT.strengths.put("redstone", 0);
-        DEFAULT.strengths.put("lapis", 0);
-        DEFAULT.strengths.put("quartz", 0);
-        DEFAULT.strengths.put("gold", 0);
-        DEFAULT.strengths.put("emerald", 0);
-        DEFAULT.strengths.put("amethyst", 0);
-        DEFAULT.strengths.put("diamond", 1);
-        DEFAULT.strengths.put("netherite", 2);
-    }
+        """;
 
     private static final Gson GSON =
         new GsonBuilder()
@@ -142,34 +88,37 @@ public final class Config {
             .setLenient()
             .create();
 
-    public static @NotNull Config read(@NotNull Path configDirectory) {
-        Objects.requireNonNull(configDirectory, "Argument 'configDirectory'");
+    public static @NotNull Config read(@NotNull Path directory) {
+        Path filePath = directory.resolve("trimseffects-config2.json");
+        Path tempPath = directory.resolve("trimseffects-config2.json.tmp");
 
-        Path filePath = configDirectory.resolve("trimeffects-config.json");
-        Path tempPath = configDirectory.resolve("trimeffects-config.json.tmp");
-
-        try {
-            return GSON.fromJson(Files.newBufferedReader(filePath), Config.class);
+        try (var reader = Files.newBufferedReader(filePath)) {
+            return GSON.fromJson(reader, Config.class);
         } catch (NoSuchFileException cause) {
-            TrimEffects.LOGGER.error("Failed to read config, file not found");
-        } catch (IOException cause) {
-            TrimEffects.LOGGER.error("Failed to read config, IO error", cause);
+            TrimEffects2.LOGGER.warn("(TrimsEffects) Config file not found: {}", filePath);
+            writeDefaultConfig(filePath, tempPath);
         } catch (JsonParseException cause) {
-            TrimEffects.LOGGER.error("Failed to read config, JSON error", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Config file is invalid! {}", cause.getMessage());
+        } catch (IOException cause) {
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config file, IO error", cause);
         } catch (Exception cause) {
-            TrimEffects.LOGGER.error("Failed to read config", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to read config file", cause);
         }
 
+        TrimEffects2.LOGGER.warn("(TrimsEffects) Using default config values");
+
+        return GSON.fromJson(DEFAULT, Config.class);
+    }
+
+    private static void writeDefaultConfig(@NotNull Path filePath, @NotNull Path tempPath) {
         try {
-            Files.writeString(tempPath, GSON.toJson(DEFAULT));
+            Files.writeString(tempPath, DEFAULT);
             Files.move(tempPath, filePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException cause) {
-            TrimEffects.LOGGER.error("Failed to write new config, IO error", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write default config file, IO error", cause);
         } catch (Exception cause) {
-            TrimEffects.LOGGER.error("Failed to write new config", cause);
+            TrimEffects2.LOGGER.error("(TrimsEffects) Failed to write default config file", cause);
         }
-
-        return DEFAULT;
     }
 
 }
