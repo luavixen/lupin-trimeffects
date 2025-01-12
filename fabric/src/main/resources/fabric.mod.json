@@ -6,8 +6,8 @@
 
     "depends": {
         "java": ">=21",
-        "minecraft": ">=${mcversion}",
-        "fabricloader": ">=0.14.0"
+        "minecraft": "${minecraft_version_semver}",
+        "fabricloader": ">=0.15.0"
     },
 
     "name": "TrimsEffects",

@@ -8,6 +8,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.trim.ArmorTrim;
 import net.minecraft.item.trim.ArmorTrimMaterial;
@@ -37,7 +38,7 @@ public final class TrimEffects2 {
 
     public Config config;
 
-    public void initialize(Path directory) {
+    public void initialize(@NotNull Path directory) {
         config = Config.read(directory);
     }
 
@@ -204,6 +205,8 @@ public final class TrimEffects2 {
     }
 
     public void onLivingEntityTick(@NotNull LivingEntity entity) {
+        if (!config.applyToMobs && !(entity instanceof PlayerEntity)) return;
+
         DynamicRegistryManager manager = getRegistryManager(entity);
 
         Registry<StatusEffect> registry = null;
@@ -238,19 +241,33 @@ public final class TrimEffects2 {
         public final RegistryEntry<StatusEffect> effect;
         public final RegistryKey<StatusEffect> effectKey;
 
-        public int amplifier;
+        public int index;
 
         public EffectDetails(RegistryEntry<StatusEffect> effect, RegistryKey<StatusEffect> effectKey) {
             this.effect = effect;
             this.effectKey = effectKey;
         }
 
-        public void increaseAmplifier(int maximumLevel) {
-            amplifier = Math.min(amplifier + 1, maximumLevel - 1);
+        public void incrementIndex() {
+            index++;
+        }
+
+        private int getMatchingEffectLevel() {
+            var matchingEffectLevels = TrimEffects2.INSTANCE.config.matchingEffectLevels;
+            if (matchingEffectLevels == null || matchingEffectLevels.isEmpty()) return 1;
+
+            if (index < 0) return matchingEffectLevels.getFirst();
+            if (index >= matchingEffectLevels.size()) return matchingEffectLevels.getLast();
+
+            return matchingEffectLevels.get(index);
+        }
+
+        public int getAmplifier() {
+            return Math.max(getMatchingEffectLevel() - 1, 0);
         }
 
         public StatusEffectInstance createStatusEffectInstance() {
-            return new StatusEffectInstance(effect, STATUS_EFFECT_DURATION_MARKER, amplifier);
+            return new StatusEffectInstance(effect, STATUS_EFFECT_DURATION_MARKER, getAmplifier());
         }
     }
 
@@ -265,7 +282,7 @@ public final class TrimEffects2 {
 
                 for (EffectDetails effectDetails : effects) {
                     if (effectDetails.effectKey.equals(effectKey)) {
-                        effectDetails.increaseAmplifier(config.maxEffectLevel);
+                        effectDetails.incrementIndex();
                         exists = true;
                         break;
                     }
@@ -319,11 +336,11 @@ public final class TrimEffects2 {
                 entity.addStatusEffect(effectDetails.createStatusEffectInstance(), entity);
             } else {
                 if (instance.getDuration() == STATUS_EFFECT_DURATION_MARKER) {
-                    if (instance.getAmplifier() == effectDetails.amplifier) {
+                    if (instance.getAmplifier() == effectDetails.getAmplifier()) {
                         continue;
                     }
                 } else {
-                    if (instance.getAmplifier() >= effectDetails.amplifier) {
+                    if (instance.getAmplifier() >= effectDetails.getAmplifier()) {
                         continue;
                     }
                 }
@@ -357,7 +374,7 @@ public final class TrimEffects2 {
                 }
 
                 if (effectsToRemove == null) {
-                    effectsToRemove = new ObjectArraySet<>(1);
+                    effectsToRemove = new ObjectArraySet<>(2);
                 }
 
                 effectsToRemove.add(effect);

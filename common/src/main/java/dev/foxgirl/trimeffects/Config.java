@@ -17,7 +17,10 @@ public final class Config {
 
     public Map<String, List<String>> effects;
 
-    public int maxEffectLevel;
+    public boolean applyToMobs;
+
+    public List<Integer> matchingEffectLevels;
+
     public double absorptionStunSeconds;
     public boolean resinGivesNightVision;
 
@@ -58,10 +61,17 @@ public final class Config {
             "bolt": ["dolphins_grace"]
           },
 
-          // Maximum level of any effect applied to a player, default 2
-          "maxEffectLevel": 2,
+          // Whether mobs wearing trimmed armor should get the same
+          // status effects as players, default true
+          "applyToMobs": true,
 
-          // How long a player needs to wait for absorption to refresh, in seconds, default 12.0
+          // Association between number of matching status effects per
+          // armor piece / armor trim to what level the status effect
+          // should have, default [1, 1, 1, 2]
+          "matchingEffectLevels": [1, 1, 1, 2],
+
+          // How long a player needs to wait for absorption to refresh,
+          // in seconds, default 12.0
           "absorptionStunSeconds": 12.0,
 
           // Whether resin gives night vision, default true

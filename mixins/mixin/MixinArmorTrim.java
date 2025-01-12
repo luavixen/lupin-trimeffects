@@ -22,31 +22,18 @@ public abstract class MixinArmorTrim {
     /*
     @Inject(method = "appendTooltip", at = @At("TAIL"))
     private static void trimeffects$afterAppendTooltip(ItemStack stack, DynamicRegistryManager manager, List<Text> tooltip, CallbackInfo info) {
-        var trim = TrimEffects.getTrim(manager, stack);
-        if (trim != null) {
-            var config = TrimEffects.getInstance().getConfig();
+        var trim = TrimEffects2.getArmorTrim(manager, stack);
+        if (trim == null) return;
 
-            var pattern = trim.getPattern();
-            var material = trim.getMaterial();
+        var details = TrimEffects2.INSTANCE.createTrimDetails(trim, TrimEffects2.getStatusEffectRegistry(manager));
+        if (details == null) return;
 
-            var effect = config.getEffects().get(TrimEffects.getKey(pattern));
-            var strength = config.getStrengths().get(TrimEffects.getKey(material));
-
-            if (effect != null && strength != null && strength > 0) {
-                var effectType = manager.get(RegistryKeys.STATUS_EFFECT).get(effect);
-                if (effectType != null) {
-                    var text = ScreenTexts.space().append(effectType.getName());
-                    if (strength > 1) {
-                        text.append(ScreenTexts.SPACE);
-                        if (strength <= 10) {
-                            text.append(Text.translatable("enchantment.level." + strength));
-                        } else {
-                            text.append(strength.toString());
-                        }
-                    }
-                    tooltip.add(text.fillStyle(material.value().description().getStyle()));
-                }
-            }
+        for (var effect : details.effects()) {
+            tooltip.add(
+                ScreenTexts.space()
+                    .append(effect.value().getName())
+                    .fillStyle(trim.getMaterial().value().description().getStyle())
+            );
         }
     }
     */

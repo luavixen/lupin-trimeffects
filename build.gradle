@@ -19,7 +19,7 @@ subprojects {
 
     base {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
-        archivesName = "$rootProject.mod_name-$project.name"
+        archivesName = "${rootProject.mod_name}-${project.name}-mc${rootProject.minecraft_version_min}"
     }
 
     repositories {
@@ -61,14 +61,20 @@ subprojects {
                 'Implementation-Title'    : 'TrimsEffects',
                 'Implementation-Version'  : rootProject.mod_version,
                 'Implementation-Vendor'   : 'luavixen',
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
             ])
         }
     }
 
     processResources {
         filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'META-INF/*.mods.toml']) {
-            expand 'version': project.mod_version, 'mcversion': project.minecraft_version_min
+            expand([
+                'version': rootProject.mod_version,
+                'minecraft_version': rootProject.minecraft_version,
+                'minecraft_version_min': rootProject.minecraft_version_min,
+                'minecraft_version_max': rootProject.minecraft_version_max,
+                'minecraft_version_semver': rootProject.minecraft_version_semver,
+            ])
         }
     }
 }
