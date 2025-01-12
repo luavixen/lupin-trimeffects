@@ -10,9 +10,9 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.trim.ArmorTrim;
-import net.minecraft.item.trim.ArmorTrimMaterial;
-import net.minecraft.item.trim.ArmorTrimPattern;
+import net.minecraft.item.equipment.trim.ArmorTrim;
+import net.minecraft.item.equipment.trim.ArmorTrimMaterial;
+import net.minecraft.item.equipment.trim.ArmorTrimPattern;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -47,7 +47,7 @@ public final class TrimEffects2 {
     }
 
     public static @NotNull Registry<StatusEffect> getStatusEffectRegistry(@NotNull DynamicRegistryManager manager) {
-        return manager.get(RegistryKeys.STATUS_EFFECT);
+        return manager.getOrThrow(RegistryKeys.STATUS_EFFECT);
     }
     public static Registry<StatusEffect> getStatusEffectRegistry(@NotNull Entity entity) {
         return getStatusEffectRegistry(getRegistryManager(entity));
@@ -191,8 +191,8 @@ public final class TrimEffects2 {
     }
 
     public @Nullable TrimDetails createTrimDetails(@NotNull ArmorTrim trim, @NotNull Registry<StatusEffect> effectRegistry) {
-        RegistryKey<ArmorTrimMaterial> materialKey = getRegistryKey(trim.getMaterial());
-        RegistryKey<ArmorTrimPattern> patternKey = getRegistryKey(trim.getPattern());
+        RegistryKey<ArmorTrimMaterial> materialKey = getRegistryKey(trim.material());
+        RegistryKey<ArmorTrimPattern> patternKey = getRegistryKey(trim.pattern());
 
         if (config.resinGivesNightVision && materialKey.getValue().getPath().contains("resin")) {
             return new TrimDetails(trim, materialKey, patternKey, StatusEffects.NIGHT_VISION);

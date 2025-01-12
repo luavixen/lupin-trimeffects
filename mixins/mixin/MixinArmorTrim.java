@@ -4,7 +4,7 @@ import dev.foxgirl.trimeffects.TrimEffects2;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.item.trim.ArmorTrim;
+import net.minecraft.item.equipment.trim.ArmorTrim;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -32,7 +32,7 @@ public abstract class MixinArmorTrim {
             tooltip.add(
                 ScreenTexts.space()
                     .append(effect.value().getName())
-                    .fillStyle(trim.getMaterial().value().description().getStyle())
+                    .fillStyle(trim.material().value().description().getStyle())
             );
         }
     }
@@ -56,7 +56,7 @@ public abstract class MixinArmorTrim {
                 tooltip.accept(
                     ScreenTexts.space()
                         .append(effect.value().getName())
-                        .fillStyle(self.getMaterial().value().description().getStyle())
+                        .fillStyle(self.material().value().description().getStyle())
                 );
             }
         }
