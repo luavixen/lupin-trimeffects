@@ -13,10 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.equipment.trim.ArmorTrim;
 import net.minecraft.item.equipment.trim.ArmorTrimMaterial;
 import net.minecraft.item.equipment.trim.ArmorTrimPattern;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.*;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -30,17 +27,28 @@ import java.nio.file.Path;
 
 public final class TrimEffects2 {
 
-    public static final Logger LOGGER = LogManager.getLogger("trimeffects");
+    // region LOGGER and INSTANCE static fields
 
+    public static final Logger LOGGER = LogManager.getLogger("trimeffects");
     public static final TrimEffects2 INSTANCE = new TrimEffects2();
+
+    // endregion LOGGER and INSTANCE static fields
 
     public static final int STATUS_EFFECT_DURATION_MARKER = -75915;
 
+    //region Class constructor/initialization function and config field
+
     public Config config;
+
+    private TrimEffects2() {}
 
     public void initialize(@NotNull Path directory) {
         config = Config.read(directory);
     }
+
+    //endregion TrimEffects2 constructor and config field
+
+    //region Registry helper functions
 
     public static @NotNull DynamicRegistryManager getRegistryManager(@NotNull Entity entity) {
         return entity.getWorld().getRegistryManager();
@@ -57,155 +65,255 @@ public final class TrimEffects2 {
         return entry.getKey().orElseThrow();
     }
 
-    public static @Nullable ArmorTrim getArmorTrim(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
+    @FunctionalInterface
+    public interface RegistryEntryGetter<T> {
+        @NotNull Optional<@NotNull RegistryEntry<T>> getEntry(@NotNull Identifier id);
+    }
+
+    public static <T> @NotNull RegistryEntryGetter<T> toRegistryEntryGetter(@NotNull Registry<T> registry) {
+        return id -> {
+            var entry = registry.getEntry(id);
+            return entry.isPresent() ? Optional.of(entry.get()) : Optional.empty();
+        };
+    }
+    public static <T> @NotNull RegistryEntryGetter<T> toRegistryEntryGetter(@NotNull RegistryWrapper<T> wrapper) {
+        return id -> {
+            RegistryKey<?> registryKey = ((RegistryWrapper.Impl<T>) wrapper).getKey();
+
+            @SuppressWarnings("unchecked")
+            RegistryKey<T> entryKey = RegistryKey.of((RegistryKey<Registry<T>>) registryKey, id);
+
+            var entry = wrapper.getOptional(entryKey);
+            return entry.isPresent() ? Optional.of(entry.get()) : Optional.empty();
+        };
+    }
+
+    //endregion Registry helper functions
+
+    //region ItemStack to ArmorTrim getter function
+
+    public static @Nullable ArmorTrim getArmorTrimFromItemStack(@NotNull DynamicRegistryManager manager, @NotNull ItemStack stack) {
+
+        // Implementation for 1.20.5 and up
         return stack.get(DataComponentTypes.TRIM);
+
+        // Implementation for 1.20.4 and below
         /*
         var nbt = stack.getSubNbt("Trim");
         if (nbt == null || !stack.isIn(ItemTags.TRIMMABLE_ARMOR)) return null;
         return ArmorTrim.CODEC.parse(RegistryOps.of(NbtOps.INSTANCE, manager), nbt).result().orElse(null);
         */
+
     }
+
+    //endregion ItemStack to ArmorTrim getter function
+
+    //region Status effect duration setter function
 
     public interface DurationSetter {
         void trimeffects$setDuration(int duration);
     }
 
-    public static void setDuration(@NotNull StatusEffectInstance instance, int duration) {
+    public static void setStatusEffectDuration(@NotNull StatusEffectInstance instance, int duration) {
         ((DurationSetter) instance).trimeffects$setDuration(duration);
     }
 
-    private final Map<Identifier, Identifier[]> patternToEffectsCache = new HashMap<>();
+    //endregion Status effect duration setter function
 
-    private @Nullable Set<RegistryEntry<StatusEffect>> lookupEffectsForPatternIDInCache(Registry<StatusEffect> registry, Identifier patternID) {
-        var effectIDs = patternToEffectsCache.get(patternID);
-        if (effectIDs == null) return null;
+    //region IdentifierToEffectSetMapping implementation
+
+    private static abstract class IdentifierToEffectSetMapping {
 
         @SuppressWarnings("unchecked")
-        var effects = (RegistryEntry<StatusEffect>[]) new RegistryEntry[effectIDs.length];
+        private static RegistryEntry<StatusEffect>[] createStatusEffectArray(int length) {
+            return (RegistryEntry<StatusEffect>[]) new RegistryEntry[length];
+        }
 
-        for (int i = 0, length = effects.length; i < length; i++) {
-            var effect = registry.getEntry(effectIDs[i]);
-            if (effect.isPresent()) {
-                effects[i] = effect.get();
-            } else {
-                patternToEffectsCache.remove(patternID);
-                return null;
+        private final Map<Identifier, Identifier[]> keyToEffectsCache = new HashMap<>();
+
+        private Set<RegistryEntry<StatusEffect>> lookupEffectsInCache(RegistryEntryGetter<StatusEffect> registry, Identifier key) {
+            var effectIDs = keyToEffectsCache.get(key);
+            if (effectIDs == null) return null;
+
+            int length = effectIDs.length;
+            var effects = createStatusEffectArray(length);
+
+            for (int i = 0; i < length; i++) {
+                var effect = registry.getEntry(effectIDs[i]);
+                if (effect.isPresent()) {
+                    effects[i] = effect.get();
+                } else {
+                    keyToEffectsCache.remove(key);
+                    return null;
+                }
+            }
+
+            return new ObjectArraySet<>(effects);
+        }
+
+        private void storeEffectsInCache(Identifier key, Set<Identifier> effectIDs) {
+            keyToEffectsCache.put(key, effectIDs.toArray(new Identifier[0]));
+        }
+
+        private final Set<String> missingKeys = new HashSet<>();
+        private final Set<String> invalidEffects = new HashSet<>();
+
+        private void warnMissingKey(String keyString) {
+            if (missingKeys.add(keyString)) {
+                printWarningForMissingKey(keyString);
+            }
+        }
+        private void warnInvalidEffect(String effectString) {
+            if (invalidEffects.add(effectString)) {
+                printWarningForInvalidEffect(effectString);
             }
         }
 
-        return new ObjectArraySet<>(effects);
-    }
+        protected abstract void printWarningForMissingKey(String keyString);
+        protected abstract void printWarningForInvalidEffect(String effectString);
 
-    private static final Identifier[] EMPTY_EFFECT_IDS = new Identifier[0];
+        protected abstract Map<String, List<String>> getUnderlyingConfigValue();
 
-    private void storeEffectsForPatternIDInCache(Identifier patternID, Set<Identifier> effectIDs) {
-        patternToEffectsCache.put(patternID, effectIDs.toArray(EMPTY_EFFECT_IDS));
-    }
+        public final @NotNull Set<@NotNull RegistryEntry<StatusEffect>> collectEffectsForKey(
+            @NotNull RegistryEntryGetter<StatusEffect> registry,
+            @NotNull Identifier key
+        ) {
+            var cachedEffects = lookupEffectsInCache(registry, key);
+            if (cachedEffects != null) return cachedEffects;
 
-    private final Set<String> missingPatterns = new HashSet<>();
-    private final Set<String> invalidEffects = new HashSet<>();
+            String keyPathString = key.getPath();
+            String keyFullString = key.toString();
 
-    private void warnMissingPattern(String patternString) {
-        if (missingPatterns.add(patternString)) {
-            LOGGER.warn("(TrimsEffects) Config is missing an effect for trim pattern \"{}\", consider adding it!", patternString);
+            for (var entry : getUnderlyingConfigValue().entrySet()) {
+                String entryKeyString = entry.getKey();
+
+                if (
+                    keyPathString.equalsIgnoreCase(entryKeyString) ||
+                    keyFullString.equalsIgnoreCase(entryKeyString)
+                ) {
+                    List<String> effectStrings = entry.getValue();
+                    if (effectStrings == null || effectStrings.isEmpty()) {
+                        return ImmutableSet.of();
+                    }
+
+                    final int size = effectStrings.size();
+                    boolean invalid = false;
+
+                    var effectIDs = new ObjectArraySet<Identifier>(new Identifier[size], 0);
+                    var effects = createStatusEffectArray(size);
+
+                    for (String effectString : effectStrings) {
+                        var effectID = Identifier.tryParse(effectString);
+                        if (effectID == null) {
+                            warnInvalidEffect(effectString);
+                            invalid = true;
+                            continue;
+                        }
+
+                        var effect = registry.getEntry(effectID);
+                        if (effect.isEmpty()) {
+                            warnInvalidEffect(effectString);
+                            invalid = true;
+                            continue;
+                        }
+
+                        if (effectIDs.add(effectID)) {
+                            effects[effectIDs.size() - 1] = effect.get();
+                        }
+                    }
+
+                    if (!invalid) {
+                        storeEffectsInCache(key, effectIDs);
+                    }
+
+                    return new ObjectArraySet<>(effects, effectIDs.size());
+                }
+            }
+
+            warnMissingKey(keyFullString);
+            return ImmutableSet.of();
         }
+
     }
-    private void warnInvalidEffect(String effectString) {
-        if (invalidEffects.add(effectString)) {
+
+    //endregion IdentifierToEffectSetMapping implementation
+
+    //region configEffectsMapping and configMaterialEffectOverridesMapping IdentifierToEffectSetMapping instances
+
+    private final @NotNull IdentifierToEffectSetMapping configEffectsMapping = new IdentifierToEffectSetMapping() {
+        protected void printWarningForMissingKey(String keyString) {
+            LOGGER.warn("(TrimsEffects) Config is missing an effect for trim pattern \"{}\", consider adding it!", keyString);
+        }
+        protected void printWarningForInvalidEffect(String effectString) {
             LOGGER.warn("(TrimsEffects) Config has an unknown/invalid effect \"{}\", check your spelling", effectString);
         }
-    }
 
-    @SuppressWarnings("unchecked")
-    private Set<RegistryEntry<StatusEffect>> findEffectsForPatternID(Registry<StatusEffect> registry, Identifier patternID) {
-        var cachedEffects = lookupEffectsForPatternIDInCache(registry, patternID);
-        if (cachedEffects != null) return cachedEffects;
-
-        String patternPathString = patternID.getPath();
-        String patternFullString = patternID.toString();
-
-        for (var entry : config.effects.entrySet()) {
-            String key = entry.getKey();
-
-            if (
-                patternPathString.equalsIgnoreCase(key) ||
-                patternFullString.equalsIgnoreCase(key)
-            ) {
-                List<String> effectStrings = entry.getValue();
-                if (effectStrings == null || effectStrings.isEmpty()) {
-                    return ImmutableSet.of();
-                }
-
-                final int size = effectStrings.size();
-                boolean invalid = false;
-
-                var effectIDs = new ObjectArraySet<Identifier>(new Identifier[size], 0);
-                var effects = (RegistryEntry<StatusEffect>[]) new RegistryEntry[size];
-
-                for (String effectString : effectStrings) {
-                    var effectID = Identifier.tryParse(effectString);
-                    if (effectID == null) {
-                        warnInvalidEffect(effectString);
-                        invalid = true;
-                        continue;
-                    }
-
-                    var effect = registry.getEntry(effectID);
-                    if (effect.isEmpty()) {
-                        warnInvalidEffect(effectString);
-                        invalid = true;
-                        continue;
-                    }
-
-                    if (effectIDs.add(effectID)) {
-                        effects[effectIDs.size() - 1] = effect.get();
-                    }
-                }
-
-                if (!invalid) {
-                    storeEffectsForPatternIDInCache(patternID, effectIDs);
-                }
-
-                return new ObjectArraySet<>(effects, effectIDs.size());
-            }
+        protected Map<String, List<String>> getUnderlyingConfigValue() {
+            return config.effects;
+        }
+    };
+    private final @NotNull IdentifierToEffectSetMapping configMaterialEffectOverridesMapping = new IdentifierToEffectSetMapping() {
+        protected void printWarningForMissingKey(String keyString) {
+        }
+        protected void printWarningForInvalidEffect(String effectString) {
+            LOGGER.warn("(TrimsEffects) Config has an unknown/invalid effect \"{}\" in materialEffectOverrides, check your spelling", effectString);
         }
 
-        warnMissingPattern(patternFullString);
-        return ImmutableSet.of();
+        protected Map<String, List<String>> getUnderlyingConfigValue() {
+            return config.materialEffectOverrides;
+        }
+    };
+
+    //endregion configEffectsMapping and configMaterialEffectOverridesMapping IdentifierToEffectSetMapping instances
+
+    //region collectEffectsForPatternAndMaterial function
+
+    private @NotNull Set<@NotNull RegistryEntry<StatusEffect>> collectEffectsForPatternAndMaterial(
+        @NotNull RegistryEntryGetter<StatusEffect> registry,
+        @NotNull RegistryKey<ArmorTrimMaterial> materialKey,
+        @NotNull RegistryKey<ArmorTrimPattern> patternKey
+    ) {
+        var effectsOverridden = configMaterialEffectOverridesMapping.collectEffectsForKey(registry, materialKey.getValue());
+        if (!effectsOverridden.isEmpty()) return effectsOverridden;
+        return configEffectsMapping.collectEffectsForKey(registry, patternKey.getValue());
     }
+
+    //endregion collectEffectsForPatternAndMaterial function
+
+    //region TrimDetails record and createTrimDetails function
 
     public record TrimDetails(
-        ArmorTrim trim,
-        RegistryKey<ArmorTrimMaterial> materialKey,
-        RegistryKey<ArmorTrimPattern> patternKey,
-        Set<RegistryEntry<StatusEffect>> effects
-    ) {
-        public TrimDetails(
-            ArmorTrim trim,
-            RegistryKey<ArmorTrimMaterial> materialKey,
-            RegistryKey<ArmorTrimPattern> patternKey,
-            RegistryEntry<StatusEffect> effect
-        ) {
-            this(trim, materialKey, patternKey, ImmutableSet.of(effect));
-        }
-    }
+        @NotNull ArmorTrim trim,
+        @NotNull RegistryKey<ArmorTrimMaterial> materialKey,
+        @NotNull RegistryKey<ArmorTrimPattern> patternKey,
+        @NotNull Set<RegistryEntry<StatusEffect>> effects
+    ) {}
 
-    public @Nullable TrimDetails createTrimDetails(@NotNull ArmorTrim trim, @NotNull Registry<StatusEffect> effectRegistry) {
+    public @Nullable TrimDetails createTrimDetails(@NotNull RegistryEntryGetter<StatusEffect> registry, @NotNull ArmorTrim trim) {
         RegistryKey<ArmorTrimMaterial> materialKey = getRegistryKey(trim.material());
         RegistryKey<ArmorTrimPattern> patternKey = getRegistryKey(trim.pattern());
 
-        if (config.resinGivesNightVision && materialKey.getValue().getPath().contains("resin")) {
-            return new TrimDetails(trim, materialKey, patternKey, StatusEffects.NIGHT_VISION);
-        }
-
-        var effects = findEffectsForPatternID(effectRegistry, patternKey.getValue());
+        var effects = collectEffectsForPatternAndMaterial(registry, materialKey, patternKey);
         if (effects.isEmpty()) return null;
 
         return new TrimDetails(trim, materialKey, patternKey, effects);
     }
 
+    //endregion TrimDetails record and createTrimDetails function
+
+    private boolean shouldApplyToEntity(@NotNull LivingEntity entity) {
+        if (config.applyToMobs) {
+            return true;
+        } else {
+            return entity instanceof PlayerEntity;
+        }
+    }
+
     public void onLivingEntityTick(@NotNull LivingEntity entity) {
-        if (!config.applyToMobs && !(entity instanceof PlayerEntity)) return;
+        if (!shouldApplyToEntity(entity)) {
+            removeEffectsFromTrims(entity, null);
+            return;
+        }
 
         DynamicRegistryManager manager = getRegistryManager(entity);
 
@@ -213,13 +321,13 @@ public final class TrimEffects2 {
         ArrayList<TrimDetails> trims = null;
 
         for (ItemStack stack : entity.getArmorItems()) {
-            var trim = getArmorTrim(manager, stack);
+            var trim = getArmorTrimFromItemStack(manager, stack);
             if (trim != null) {
                 if (registry == null) {
                     registry = getStatusEffectRegistry(manager);
                 }
 
-                var details = createTrimDetails(trim, registry);
+                var details = createTrimDetails(toRegistryEntryGetter(registry), trim);
                 if (details == null) continue;
 
                 if (trims == null) {
@@ -237,37 +345,89 @@ public final class TrimEffects2 {
         }
     }
 
+    private int getConfigMatchingEffectLevel(int index) {
+        var matchingEffectLevels = config.matchingEffectLevels;
+        if (matchingEffectLevels.isEmpty()) return -1;
+
+        if (index < 0) return matchingEffectLevels.getFirst();
+        if (index >= matchingEffectLevels.size()) return matchingEffectLevels.getLast();
+
+        return matchingEffectLevels.get(index);
+    }
+
+    private int getConfigMaterialEffectLevel(@NotNull Identifier key) {
+        var materialEffectLevels = config.materialEffectLevels;
+        if (materialEffectLevels.isEmpty()) return -1;
+
+        String keyPathString = key.getPath();
+        String keyFullString = key.toString();
+
+        for (var entry : materialEffectLevels.entrySet()) {
+            String entryKeyString = entry.getKey();
+
+            if (
+                keyPathString.equalsIgnoreCase(entryKeyString) ||
+                keyFullString.equalsIgnoreCase(entryKeyString)
+            ) {
+                return entry.getValue();
+            }
+        }
+
+        return -1;
+    }
+
     private static final class EffectDetails {
         public final RegistryEntry<StatusEffect> effect;
         public final RegistryKey<StatusEffect> effectKey;
 
-        public int index;
+        public final RegistryKey<ArmorTrimPattern> patternKey;
+        public final RegistryKey<ArmorTrimMaterial> materialKey;
 
-        public EffectDetails(RegistryEntry<StatusEffect> effect, RegistryKey<StatusEffect> effectKey) {
+        public int index;
+        public int level = -1;
+
+        public EffectDetails(
+            RegistryEntry<StatusEffect> effect,
+            RegistryKey<StatusEffect> effectKey,
+            RegistryKey<ArmorTrimPattern> patternKey,
+            RegistryKey<ArmorTrimMaterial> materialKey
+        ) {
             this.effect = effect;
             this.effectKey = effectKey;
+            this.patternKey = patternKey;
+            this.materialKey = materialKey;
         }
 
         public void incrementIndex() {
             index++;
+            level = -1;
         }
 
-        private int getMatchingEffectLevel() {
-            var matchingEffectLevels = TrimEffects2.INSTANCE.config.matchingEffectLevels;
-            if (matchingEffectLevels == null || matchingEffectLevels.isEmpty()) return 1;
+        private void updateLevel() {
+            if (level >= 0) return;
 
-            if (index < 0) return matchingEffectLevels.getFirst();
-            if (index >= matchingEffectLevels.size()) return matchingEffectLevels.getLast();
+            int levelMaterial = TrimEffects2.INSTANCE.getConfigMaterialEffectLevel(materialKey.getValue());
+            if (levelMaterial >= 0) {
+                level = levelMaterial;
+                return;
+            }
 
-            return matchingEffectLevels.get(index);
+            int levelIndex = TrimEffects2.INSTANCE.getConfigMatchingEffectLevel(index);
+            if (levelIndex >= 0) {
+                level = levelIndex;
+                return;
+            }
+
+            level = 0;
         }
 
         public int getAmplifier() {
-            return Math.max(getMatchingEffectLevel() - 1, 0);
+            updateLevel();
+            return level > 0 ? Math.max(level - 1, 0) : -1;
         }
 
         public StatusEffectInstance createStatusEffectInstance() {
-            return new StatusEffectInstance(effect, STATUS_EFFECT_DURATION_MARKER, getAmplifier());
+            return new StatusEffectInstance(effect, STATUS_EFFECT_DURATION_MARKER, Math.max(getAmplifier(), 0));
         }
     }
 
@@ -289,10 +449,16 @@ public final class TrimEffects2 {
                 }
 
                 if (!exists) {
-                    effects.add(new EffectDetails(effect, effectKey));
+                    effects.add(new EffectDetails(
+                        effect, effectKey,
+                        trimDetails.patternKey(),
+                        trimDetails.materialKey()
+                    ));
                 }
             }
         }
+
+        effects.removeIf((effectDetails) -> effectDetails.getAmplifier() < 0);
 
         return effects;
     }
@@ -315,7 +481,7 @@ public final class TrimEffects2 {
         ) {
             int stunDurationInTicks = (int) (config.absorptionStunSeconds * 20.0);
             stunTicks.setValue(stunDurationInTicks);
-            setDuration(instance, stunDurationInTicks);
+            setStatusEffectDuration(instance, stunDurationInTicks);
             return true;
         }
         return false;

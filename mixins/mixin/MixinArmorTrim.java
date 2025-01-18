@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.equipment.trim.ArmorTrim;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -46,10 +47,12 @@ public abstract class MixinArmorTrim {
         if (showInTooltip) {
             var self = (ArmorTrim) (Object) this;
 
-            var player = MinecraftClient.getInstance().player;
-            if (player == null) return;
+            var registryLookup = context.getRegistryLookup();
+            if (registryLookup == null) return;
+            var registryWrapper = registryLookup.getOrThrow(RegistryKeys.STATUS_EFFECT);
+            var registry = TrimEffects2.toRegistryEntryGetter(registryWrapper);
 
-            var details = TrimEffects2.INSTANCE.createTrimDetails(self, TrimEffects2.getStatusEffectRegistry(player));
+            var details = TrimEffects2.INSTANCE.createTrimDetails(registry, self);
             if (details == null) return;
 
             for (var effect : details.effects()) {
