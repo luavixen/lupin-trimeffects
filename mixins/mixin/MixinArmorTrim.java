@@ -26,7 +26,10 @@ public abstract class MixinArmorTrim {
         var trim = TrimEffects2.getArmorTrim(manager, stack);
         if (trim == null) return;
 
-        var details = TrimEffects2.INSTANCE.createTrimDetails(trim, TrimEffects2.getStatusEffectRegistry(manager));
+        var details = TrimEffects2.INSTANCE.createTrimDetails(
+            TrimEffects2.toRegistryEntryGetter(TrimEffects2.getStatusEffectRegistry(manager)),
+            trim
+        );
         if (details == null) return;
 
         for (var effect : details.effects()) {

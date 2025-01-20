@@ -124,6 +124,8 @@ public final class TrimEffects2 {
 
     private static abstract class IdentifierToEffectSetMapping {
 
+        private static final Identifier[] EMPTY_EFFECT_IDS = new Identifier[0];
+
         @SuppressWarnings("unchecked")
         private static RegistryEntry<StatusEffect>[] createStatusEffectArray(int length) {
             return (RegistryEntry<StatusEffect>[]) new RegistryEntry[length];
@@ -136,6 +138,8 @@ public final class TrimEffects2 {
             if (effectIDs == null) return null;
 
             int length = effectIDs.length;
+            if (length == 0) return ImmutableSet.of();
+
             var effects = createStatusEffectArray(length);
 
             for (int i = 0; i < length; i++) {
@@ -151,8 +155,8 @@ public final class TrimEffects2 {
             return new ObjectArraySet<>(effects);
         }
 
-        private void storeEffectsInCache(Identifier key, Set<Identifier> effectIDs) {
-            keyToEffectsCache.put(key, effectIDs.toArray(new Identifier[0]));
+        private void storeEffectsInCache(Identifier key, @Nullable Set<Identifier> effectIDs) {
+            keyToEffectsCache.put(key, effectIDs != null ? effectIDs.toArray(EMPTY_EFFECT_IDS) : EMPTY_EFFECT_IDS);
         }
 
         private final Set<String> missingKeys = new HashSet<>();
@@ -192,7 +196,11 @@ public final class TrimEffects2 {
                     keyFullString.equalsIgnoreCase(entryKeyString)
                 ) {
                     List<String> effectStrings = entry.getValue();
-                    if (effectStrings == null || effectStrings.isEmpty()) {
+                    if (effectStrings == null) {
+                        return ImmutableSet.of();
+                    }
+                    if (effectStrings.isEmpty()) {
+                        storeEffectsInCache(key, null);
                         return ImmutableSet.of();
                     }
 
