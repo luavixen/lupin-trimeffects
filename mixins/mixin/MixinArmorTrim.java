@@ -21,7 +21,10 @@ public abstract class MixinArmorTrim {
         var trim = TrimEffects2.getArmorTrim(manager, stack);
         if (trim == null) return;
 
-        var details = TrimEffects2.INSTANCE.createTrimDetails(trim, TrimEffects2.getStatusEffectRegistry(manager));
+        var details = TrimEffects2.INSTANCE.createTrimDetails(
+            TrimEffects2.toRegistryEntryGetter(TrimEffects2.getStatusEffectRegistry(manager)),
+            trim
+        );
         if (details == null) return;
 
         for (var effect : details.effects()) {
@@ -42,16 +45,18 @@ public abstract class MixinArmorTrim {
         if (showInTooltip) {
             var self = (ArmorTrim) (Object) this;
 
-            var player = MinecraftClient.getInstance().player;
-            if (player == null) return;
+            var registryLookup = context.getRegistryLookup();
+            if (registryLookup == null) return;
+            var registryWrapper = registryLookup.getWrapperOrThrow(RegistryKeys.STATUS_EFFECT);
+            var registry = TrimEffects2.toRegistryEntryGetter(registryWrapper);
 
-            var details = TrimEffects2.INSTANCE.createTrimDetails(self, TrimEffects2.getStatusEffectRegistry(player));
+            var details = TrimEffects2.INSTANCE.createTrimDetails(registry, self);
             if (details == null) return;
 
             for (var effect : details.effects()) {
                 tooltip.accept(
                     ScreenTexts.space()
-                        .append(effect.getName())
+                        .append(effect..getName())
                         .fillStyle(self.getMaterial().value().description().getStyle())
                 );
             }
