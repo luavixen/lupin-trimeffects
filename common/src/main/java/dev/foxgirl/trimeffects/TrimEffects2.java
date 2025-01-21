@@ -10,9 +10,9 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.equipment.trim.ArmorTrim;
-import net.minecraft.item.equipment.trim.ArmorTrimMaterial;
-import net.minecraft.item.equipment.trim.ArmorTrimPattern;
+import net.minecraft.item.trim.ArmorTrim;
+import net.minecraft.item.trim.ArmorTrimMaterial;
+import net.minecraft.item.trim.ArmorTrimPattern;
 import net.minecraft.registry.*;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
@@ -55,7 +55,7 @@ public final class TrimEffects2 {
     }
 
     public static @NotNull Registry<StatusEffect> getStatusEffectRegistry(@NotNull DynamicRegistryManager manager) {
-        return manager.getOrThrow(RegistryKeys.STATUS_EFFECT);
+        return manager.get(RegistryKeys.STATUS_EFFECT);
     }
     public static Registry<StatusEffect> getStatusEffectRegistry(@NotNull Entity entity) {
         return getStatusEffectRegistry(getRegistryManager(entity));
@@ -78,7 +78,7 @@ public final class TrimEffects2 {
     }
     public static <T> @NotNull RegistryEntryGetter<T> toRegistryEntryGetter(@NotNull RegistryWrapper<T> wrapper) {
         return id -> {
-            RegistryKey<?> registryKey = ((RegistryWrapper.Impl<T>) wrapper).getKey();
+            RegistryKey<?> registryKey = ((RegistryWrapper.Impl<T>) wrapper).getRegistryKey();
 
             @SuppressWarnings("unchecked")
             RegistryKey<T> entryKey = RegistryKey.of((RegistryKey<Registry<T>>) registryKey, id);
@@ -298,8 +298,8 @@ public final class TrimEffects2 {
     ) {}
 
     public @Nullable TrimDetails createTrimDetails(@NotNull RegistryEntryGetter<StatusEffect> registry, @NotNull ArmorTrim trim) {
-        RegistryKey<ArmorTrimMaterial> materialKey = getRegistryKey(trim.material());
-        RegistryKey<ArmorTrimPattern> patternKey = getRegistryKey(trim.pattern());
+        RegistryKey<ArmorTrimMaterial> materialKey = getRegistryKey(trim.getMaterial());
+        RegistryKey<ArmorTrimPattern> patternKey = getRegistryKey(trim.getPattern());
 
         var effects = collectEffectsForPatternAndMaterial(registry, materialKey, patternKey);
         if (effects.isEmpty()) return null;

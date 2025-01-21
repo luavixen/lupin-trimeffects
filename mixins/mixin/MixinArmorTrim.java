@@ -4,7 +4,7 @@ import dev.foxgirl.trimeffects.TrimEffects2;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.item.equipment.trim.ArmorTrim;
+import net.minecraft.item.trim.ArmorTrim;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
@@ -36,7 +36,7 @@ public abstract class MixinArmorTrim {
             tooltip.add(
                 ScreenTexts.space()
                     .append(effect.value().getName())
-                    .fillStyle(trim.material().value().description().getStyle())
+                    .fillStyle(trim.getMaterial().value().description().getStyle())
             );
         }
     }
@@ -52,7 +52,7 @@ public abstract class MixinArmorTrim {
 
             var registryLookup = context.getRegistryLookup();
             if (registryLookup == null) return;
-            var registryWrapper = registryLookup.getOrThrow(RegistryKeys.STATUS_EFFECT);
+            var registryWrapper = registryLookup.getWrapperOrThrow(RegistryKeys.STATUS_EFFECT);
             var registry = TrimEffects2.toRegistryEntryGetter(registryWrapper);
 
             var details = TrimEffects2.INSTANCE.createTrimDetails(registry, self);
@@ -62,7 +62,7 @@ public abstract class MixinArmorTrim {
                 tooltip.accept(
                     ScreenTexts.space()
                         .append(effect.value().getName())
-                        .fillStyle(self.material().value().description().getStyle())
+                        .fillStyle(self.getMaterial().value().description().getStyle())
                 );
             }
         }
