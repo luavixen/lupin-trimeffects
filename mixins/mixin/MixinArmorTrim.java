@@ -18,7 +18,7 @@ public abstract class MixinArmorTrim {
 
     @Inject(method = "appendTooltip", at = @At("TAIL"))
     private static void trimeffects$afterAppendTooltip(ItemStack stack, DynamicRegistryManager manager, List<Text> tooltip, CallbackInfo info) {
-        var trim = TrimEffects2.getArmorTrim(manager, stack);
+        var trim = TrimEffects2.getArmorTrimFromItemStack(manager, stack);
         if (trim == null) return;
 
         var details = TrimEffects2.INSTANCE.createTrimDetails(
@@ -30,7 +30,7 @@ public abstract class MixinArmorTrim {
         for (var effect : details.effects()) {
             tooltip.add(
                 ScreenTexts.space()
-                    .append(effect.getName())
+                    .append(effect.value().getName())
                     .fillStyle(trim.getMaterial().value().description().getStyle())
             );
         }
@@ -56,7 +56,7 @@ public abstract class MixinArmorTrim {
             for (var effect : details.effects()) {
                 tooltip.accept(
                     ScreenTexts.space()
-                        .append(effect..getName())
+                        .append(effect.value().getName())
                         .fillStyle(self.getMaterial().value().description().getStyle())
                 );
             }
