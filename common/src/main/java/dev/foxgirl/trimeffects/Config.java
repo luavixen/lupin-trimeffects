@@ -18,9 +18,11 @@ public final class Config {
     public Map<String, List<String>> effects;
 
     public List<Integer> matchingEffectLevels;
-    public Map<String, Integer> materialEffectLevels;
 
-    public  Map<String, List<String>> materialEffectOverrides;
+    public Map<String, Integer> materialEffectLevels;
+    public int materialEffectLevelsMinimumMatching;
+
+    public Map<String, List<String>> materialEffectOverrides;
 
     public boolean applyToMobs;
 
@@ -107,6 +109,10 @@ public final class Config {
             "netherite": 2
             */
           },
+
+          // Legacy v1 feature: Minimum number of matching armor pieces required before an
+          // effect is applied when using "materialEffectLevels"
+          "materialEffectLevelsMinimumMatching": 4,
 
           // Override potion effects based on trim material instead of pattern
           // Note: The "minecraft:" prefix is omitted from material and effect names
