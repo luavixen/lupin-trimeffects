@@ -391,7 +391,7 @@ public final class TrimEffects2 {
         public final RegistryKey<ArmorTrimMaterial> materialKey;
 
         public int index;
-        public int level = -1;
+        public int amplifier = -1;
 
         public EffectDetails(
             RegistryEntry<StatusEffect> effect,
@@ -407,30 +407,40 @@ public final class TrimEffects2 {
 
         public void incrementIndex() {
             index++;
-            level = -1;
+            amplifier = -2;
         }
 
-        private void updateLevel() {
-            if (level >= 0) return;
-
-            int levelMaterial = TrimEffects2.INSTANCE.getConfigMaterialEffectLevel(materialKey.getValue());
-            if (levelMaterial >= 0) {
-                level = levelMaterial;
-                return;
-            }
-
-            int levelIndex = TrimEffects2.INSTANCE.getConfigMatchingEffectLevel(index);
-            if (levelIndex >= 0) {
-                level = levelIndex;
-                return;
-            }
-
-            level = 0;
+        private int getConfigMatchingEffectLevel() {
+            return TrimEffects2.INSTANCE.getConfigMatchingEffectLevel(index);
+        }
+        private int getConfigMaterialEffectLevel() {
+            return TrimEffects2.INSTANCE.getConfigMaterialEffectLevel(materialKey.getValue());
+        }
+        private int getConfigMaterialMinimumMatching() {
+            return TrimEffects2.INSTANCE.config.materialEffectLevelsMinimumMatching;
         }
 
         public int getAmplifier() {
-            updateLevel();
-            return level > 0 ? Math.max(level - 1, 0) : -1;
+            if (amplifier >= -1) return amplifier;
+
+            int levelMaterial = getConfigMaterialEffectLevel();
+            if (levelMaterial >= 0) {
+                if (index + 1 >= getConfigMaterialMinimumMatching()) {
+                    amplifier = Math.max(levelMaterial - 1, -1);
+                } else {
+                    amplifier = -1;
+                }
+                return amplifier;
+            }
+
+            int levelIndex = getConfigMatchingEffectLevel();
+            if (levelIndex >= 0) {
+                amplifier = Math.max(levelIndex - 1, -1);
+                return amplifier;
+            }
+
+            amplifier = -1;
+            return amplifier;
         }
 
         public StatusEffectInstance createStatusEffectInstance() {
