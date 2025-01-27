@@ -392,7 +392,7 @@ public final class TrimEffects2 {
         public final RegistryKey<ArmorTrimMaterial> materialKey;
 
         public int index;
-        public int amplifier = -1;
+        public int amplifier = -2;
 
         public EffectDetails(
             RegistryEntry<StatusEffect> effect,
