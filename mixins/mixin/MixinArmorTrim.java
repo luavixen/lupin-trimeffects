@@ -25,7 +25,7 @@ public abstract class MixinArmorTrim {
             TrimEffects2.toRegistryEntryGetter(TrimEffects2.getStatusEffectRegistry(manager)),
             trim
         );
-        if (details == null) return;
+        if (details == null || TrimEffects2.shouldOmitFromTooltip(details)) return;
 
         for (var effect : details.effects()) {
             tooltip.add(
@@ -51,7 +51,7 @@ public abstract class MixinArmorTrim {
             var registry = TrimEffects2.toRegistryEntryGetter(registryWrapper);
 
             var details = TrimEffects2.INSTANCE.createTrimDetails(registry, self);
-            if (details == null) return;
+            if (details == null || TrimEffects2.shouldOmitFromTooltip(details)) return;
 
             for (var effect : details.effects()) {
                 tooltip.accept(
