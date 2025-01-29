@@ -389,7 +389,7 @@ public final class TrimEffects2 {
         public final RegistryKey<StatusEffect> effectKey;
 
         private RegistryKey<ArmorTrimMaterial> materialKey;
-        private int materialLevel;
+        private int materialLevel = -1;
 
         public int count;
         public int amplifier = -2;
@@ -462,7 +462,11 @@ public final class TrimEffects2 {
         }
 
         public boolean shouldBeIgnored() {
-            return materialLevel == 0 || getAmplifier() < 0;
+            return getAmplifier() < 0;
+        }
+
+        public boolean shouldBeOmmittedFromTooltip() {
+            return materialLevel == 0;
         }
 
         public StatusEffectInstance createStatusEffectInstance() {
@@ -503,7 +507,7 @@ public final class TrimEffects2 {
         return effects;
     }
 
-    public static boolean shouldIgnoreEffect(TrimDetails trimDetails) {
+    public static boolean shouldOmitFromTooltip(TrimDetails trimDetails) {
         for (RegistryEntry<StatusEffect> effect : trimDetails.effects()) {
             if (new EffectDetails(effect, trimDetails.materialKey()).shouldBeIgnored()) {
                 return true;
