@@ -388,60 +388,85 @@ public final class TrimEffects2 {
         public final RegistryEntry<StatusEffect> effect;
         public final RegistryKey<StatusEffect> effectKey;
 
-        public final RegistryKey<ArmorTrimPattern> patternKey;
-        public final RegistryKey<ArmorTrimMaterial> materialKey;
+        private RegistryKey<ArmorTrimMaterial> materialKey;
+        private int materialLevel = -1;
 
-        public int index;
+        public int count;
         public int amplifier = -2;
 
         public EffectDetails(
             RegistryEntry<StatusEffect> effect,
             RegistryKey<StatusEffect> effectKey,
-            RegistryKey<ArmorTrimPattern> patternKey,
             RegistryKey<ArmorTrimMaterial> materialKey
         ) {
             this.effect = effect;
             this.effectKey = effectKey;
-            this.patternKey = patternKey;
-            this.materialKey = materialKey;
+            trySetMaterial(materialKey);
+        }
+        public EffectDetails(
+            RegistryEntry<StatusEffect> effect,
+            RegistryKey<ArmorTrimMaterial> materialKey
+        ) {
+            this(effect, getRegistryKey(effect), materialKey);
         }
 
-        public void incrementIndex() {
-            index++;
-            amplifier = -2;
-        }
-
-        private int getConfigMatchingEffectLevel() {
-            return TrimEffects2.INSTANCE.getConfigMatchingEffectLevel(index);
-        }
-        private int getConfigMaterialEffectLevel() {
+        private static int getConfigMaterialEffectLevel(RegistryKey<ArmorTrimMaterial> materialKey) {
             return TrimEffects2.INSTANCE.getConfigMaterialEffectLevel(materialKey.getValue());
+        }
+
+        private int getConfigMaterialEffectLevel() {
+            return materialKey != null ? getConfigMaterialEffectLevel(materialKey) : -1;
+        }
+        private int getConfigMatchingEffectLevel() {
+            return TrimEffects2.INSTANCE.getConfigMatchingEffectLevel(count);
         }
         private int getConfigMaterialMinimumMatching() {
             return TrimEffects2.INSTANCE.config.materialEffectLevelsMinimumMatching;
         }
 
+        public void trySetMaterial(RegistryKey<ArmorTrimMaterial> materialKey) {
+            int oldLevel = getConfigMaterialEffectLevel();
+            int newLevel = getConfigMaterialEffectLevel(materialKey);
+            if (newLevel > oldLevel) {
+                this.materialKey = materialKey;
+                this.materialLevel = getConfigMaterialEffectLevel();
+                amplifier = -2;
+            }
+        }
+
+        public void incrementCount() {
+            count++;
+            amplifier = -2;
+        }
+
         public int getAmplifier() {
             if (amplifier >= -1) return amplifier;
 
-            int levelMaterial = getConfigMaterialEffectLevel();
-            if (levelMaterial >= 0) {
-                if (index + 1 >= getConfigMaterialMinimumMatching()) {
-                    amplifier = Math.max(levelMaterial - 1, -1);
+            if (materialLevel >= 0) {
+                if (count + 1 >= getConfigMaterialMinimumMatching()) {
+                    amplifier = Math.max(materialLevel - 1, -1);
                 } else {
                     amplifier = -1;
                 }
                 return amplifier;
             }
 
-            int levelIndex = getConfigMatchingEffectLevel();
-            if (levelIndex >= 0) {
-                amplifier = Math.max(levelIndex - 1, -1);
+            int level = getConfigMatchingEffectLevel();
+            if (level >= 0) {
+                amplifier = Math.max(level - 1, -1);
                 return amplifier;
             }
 
             amplifier = -1;
             return amplifier;
+        }
+
+        public boolean shouldBeIgnored() {
+            return getAmplifier() < 0;
+        }
+
+        public boolean shouldBeOmmittedFromTooltip() {
+            return materialLevel == 0;
         }
 
         public StatusEffectInstance createStatusEffectInstance() {
@@ -460,25 +485,35 @@ public final class TrimEffects2 {
 
                 for (EffectDetails effectDetails : effects) {
                     if (effectDetails.effectKey.equals(effectKey)) {
-                        effectDetails.incrementIndex();
+                        effectDetails.trySetMaterial(trimDetails.materialKey());
+                        effectDetails.incrementCount();
                         exists = true;
                         break;
                     }
                 }
 
                 if (!exists) {
-                    effects.add(new EffectDetails(
+                    var details = new EffectDetails(
                         effect, effectKey,
-                        trimDetails.patternKey(),
                         trimDetails.materialKey()
-                    ));
+                    );
+                    if (!details.shouldBeIgnored()) {
+                        effects.add(details);
+                    }
                 }
             }
         }
 
-        effects.removeIf((effectDetails) -> effectDetails.getAmplifier() < 0);
-
         return effects;
+    }
+
+    public static boolean shouldOmitFromTooltip(TrimDetails trimDetails) {
+        for (RegistryEntry<StatusEffect> effect : trimDetails.effects()) {
+            if (new EffectDetails(effect, trimDetails.materialKey()).shouldBeIgnored()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private final Map<UUID, MutableInt> absorptionStunTicks = new HashMap<>();
