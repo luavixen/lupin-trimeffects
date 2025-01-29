@@ -492,27 +492,21 @@ public final class TrimEffects2 {
                 }
 
                 if (!exists) {
-                    var details = new EffectDetails(
+                    effects.add(new EffectDetails(
                         effect, effectKey,
                         trimDetails.materialKey()
-                    );
-                    if (!details.shouldBeIgnored()) {
-                        effects.add(details);
-                    }
+                    ));
                 }
             }
         }
+
+        effects.removeIf(EffectDetails::shouldBeIgnored);
 
         return effects;
     }
 
     public static boolean shouldOmitFromTooltip(TrimDetails trimDetails) {
-        for (RegistryEntry<StatusEffect> effect : trimDetails.effects()) {
-            if (new EffectDetails(effect, trimDetails.materialKey()).shouldBeIgnored()) {
-                return true;
-            }
-        }
-        return false;
+        return trimDetails.effects().stream().allMatch(details -> new EffectDetails(details, trimDetails.materialKey()).shouldBeOmmittedFromTooltip());
     }
 
     private final Map<UUID, MutableInt> absorptionStunTicks = new HashMap<>();
